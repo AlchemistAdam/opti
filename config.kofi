@@ -1,0 +1,7 @@
+[window]
+dir = "D:\\Pictures"
+bounds = { "height": 600, "width": 800, "x": 560, "y": 220 }
+state = "normal"
+imageDividerLocation = 400
+recentFilesCount = 6
+recentFilesMenu = ["D:\\Pictures\\18+.png" ]
