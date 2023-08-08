@@ -69,18 +69,18 @@ public class IdatQueue implements Iterable<byte[]> {
 
     public class IdatIterator implements Iterator<byte[]> {
 
-        protected Node node = root;
+        protected Node cursor = root;
 
         @Override
         public boolean hasNext() {
-            return node != null;
+            return cursor != null;
         }
 
         @Override
         public byte[] next() {
             if (hasNext()) {
-                byte[] idat = node.idat;
-                node = node.next;
+                byte[] idat = cursor.idat;
+                cursor = cursor.next;
                 return idat;
             }
             else {
