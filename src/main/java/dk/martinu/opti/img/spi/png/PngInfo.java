@@ -7,12 +7,27 @@ import dk.martinu.opti.img.spi.Chunk;
 import dk.martinu.opti.img.spi.InvalidImageException;
 
 import java.util.Objects;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
 
 import static dk.martinu.opti.Util.getInt;
 import static dk.martinu.opti.img.spi.png.ChunkType.*;
 import static dk.martinu.opti.img.spi.png.ColorType.*;
 
 public class PngInfo {
+
+    /**
+     * Constant for compression method 0 (deflate).
+     */
+    public static final int COMPRESSION_DEFLATE = 0;
+    /**
+     * Constant for interlace method 0 (null).
+     */
+    public static final int INTERLACE_NULL = 0;
+    /**
+     * Constant for interlace method 1 (Adam7).
+     */
+    public static final int INTERLACE_ADAM_7 = 1;
 
     private static final int IHDR_LENGTH = 13;
 
@@ -39,8 +54,15 @@ public class PngInfo {
      * Background color with 16-bit samples.
      */
     protected byte[] background = null;
-
-    protected IdatBuffer idatBuffer = new IdatBuffer();
+    /**
+     * Buffer for storing IDAT byte arrays as they are read.
+     */
+    protected ByteArrayBuffer idatBuffer = new ByteArrayBuffer();
+    /**
+     * {@code true} if {@link #idatBuffer} is closed, otherwise {@code false}.
+     * Set to {@code true} when another chunk has been read after one or more
+     * IDAT chunks have already been read.
+     */
     protected boolean isIdatBufferClosed = false;
 
     public PngInfo(Chunk chunk) throws InvalidImageException {
@@ -82,8 +104,16 @@ public class PngInfo {
         }
 
         compressionMethod = chunk.data()[10];
+        if (compressionMethod != COMPRESSION_DEFLATE) {
+            throw new InvalidImageException("invalid compression method {%d}", compressionMethod);
+        }
+
         filterMethod = chunk.data()[11];
+
         interlaceMethod = chunk.data()[12];
+        if (interlaceMethod != INTERLACE_NULL && interlaceMethod != INTERLACE_ADAM_7) {
+            throw new InvalidImageException("invalid interlace method {%d}", interlaceMethod);
+        }
     }
 
     // TODO create image
@@ -96,7 +126,31 @@ public class PngInfo {
             throw new InvalidImageException("missing IDAT chunk(s)");
         }
 
-        // TODO compression and filtering
+        // buffer of decompressed data
+        ByteArrayBuffer dataBuffer = new ByteArrayBuffer();
+        // decompress image data
+        Inflater inflater = new Inflater();
+        inflater.setInput(idatBuffer.getData()); // <- NOTE inflater uses array pointer; does not copy
+        if (inflater.needsDictionary()) {
+            throw new InvalidImageException("cannot decompress image data");
+        }
+        try {
+            while (!inflater.finished()) {
+                byte[] bytes = new byte[1024];
+                int len = inflater.inflate(bytes);
+                dataBuffer.add(bytes, len);
+            }
+            inflater.end();
+        }
+        catch (DataFormatException e) {
+            throw new InvalidImageException("an error occurred while decompressing image data", e);
+        }
+
+        byte[] data = dataBuffer.getData();
+
+        // TODO decompress
+
+        // TODO combine filtered scanlines
 
         // FIXME IDAT lengths are not validated and can contain any amount of data
         //  both too much and too little
@@ -116,45 +170,42 @@ public class PngInfo {
 
             /* sample depth is unchanged */
             if (bitDepth == 8) {
-                byte[] data_8 = idatBuffer.getData();
                 // filter transparent samples and set to background
                 if (transparency != null) {
                     // low-order byte of background color
                     final byte bkgd = background != null ? background[1] : 0;
-                    for (int i = 0; i < data_8.length; i++) {
-                        if (data_8[i] == transparency[1]) {
-                            data_8[i] = bkgd;
+                    for (int i = 0; i < data.length; i++) {
+                        if (data[i] == transparency[1]) {
+                            data[i] = bkgd;
                             break;
                         }
                     }
                 }
                 // transfer samples directly
-                System.arraycopy(data_8, 0, img.data, 0, data_8.length);
+                System.arraycopy(data, 0, img.data, 0, data.length);
             }
 
             /* sample depth is downscaled */
             else if (bitDepth == 16) {
-                byte[] data_16 = idatBuffer.getData();
                 // filter transparent samples and set to background
                 if (transparency != null) {
                     // high-order byte of background color
                     final byte bkgd = background != null ? background[0] : 0;
-                    for (int i = 0; i < data_16.length; i += 2) {
-                        if (data_16[i] == transparency[0] && data_16[i + 1] == transparency[1]) {
-                            data_16[i] = bkgd;
+                    for (int i = 0; i < data.length; i += 2) {
+                        if (data[i] == transparency[0] && data[i + 1] == transparency[1]) {
+                            data[i] = bkgd;
                             break;
                         }
                     }
                 }
                 // transfer high-order bytes into image data array
-                for (int i = 0, k = 0; i < data_16.length; i += 2, k = i >> 1) {
-                    img.data[k] = data_16[i];
+                for (int i = 0, k = 0; i < data.length; i += 2, k = i >> 1) {
+                    img.data[k] = data[i];
                 }
             }
 
             /* sample depth is upscaled */
             else if (bitDepth == 4) {
-                byte[] data_4 = idatBuffer.getData();
                 // filter transparent samples and set to background
                 if (transparency != null) {
                     // low-order byte of transparent color, masked
@@ -163,8 +214,8 @@ public class PngInfo {
                     // low-order byte of background color, masked
                     int bkgd = background != null ? background[1] & 0x0F : 0;
                     bkgd = bkgd << 4 | bkgd;
-                    for (int i = 0; i < data_4.length; i++) {
-                        int b = data_4[i];
+                    for (int i = 0; i < data.length; i++) {
+                        int b = data[i];
                         int s0 = b & 0xF0;
                         int s1 = b & 0x0F;
                         if ((s0 & trns) == s0) {
@@ -175,13 +226,13 @@ public class PngInfo {
                         }
                         int f = s0 | s1;
                         if (f != (b & 0xFF)) {
-                            data_4[i] = (byte) f;
+                            data[i] = (byte) f;
                         }
                     }
                 }
                 // split bytes and transfer into image data array
-                for (int i = 0, k = 0; i < data_4.length; i++, k = i << 1) {
-                    int b = data_4[i];
+                for (int i = 0, k = 0; i < data.length; i++, k = i << 1) {
+                    int b = data[i];
                     int s0 = b & 0xF0;
                     int s1 = b & 0x0F;
                     // left bit replication TESTME left bit replication
@@ -242,7 +293,6 @@ public class PngInfo {
                 }
             }
             else /* if (bitDepth == 1) */ {
-                byte[] data_1 = idatBuffer.getData();
                 // filter transparent samples and set to background
                 filterTransparent:
                 if (transparency != null) {
@@ -253,8 +303,8 @@ public class PngInfo {
                     if (trns == bkgd) {
                         break filterTransparent;
                     }
-                    for (int i = 0; i < data_1.length; i++) {
-                        int b = data_1[i];
+                    for (int i = 0; i < data.length; i++) {
+                        int b = data[i];
                         int s0 = b & 0x01;
                         int s1 = b & 0x02;
                         int s2 = b & 0x04;
@@ -290,13 +340,13 @@ public class PngInfo {
                         }
                         int f = s0 | s1 | s2 | s3 | s4 | s5 | s6 | s7;
                         if (f != (b & 0xFF)) {
-                            data_1[i] = (byte) f;
+                            data[i] = (byte) f;
                         }
                     }
                 }
                 // split bytes and transfer into image data array
-                for (int i = 0, k = 0; i < data_1.length; i++, k = i << 3) {
-                    int b = data_1[i];
+                for (int i = 0, k = 0; i < data.length; i++, k = i << 3) {
+                    int b = data[i];
                     //@fmt:off
                     img.data[k]     = (byte) ((b & 0x80) == 0 ? 0 : 0xFF);
                     img.data[k + 1] = (byte) ((b & 0x40) == 0 ? 0 : 0xFF);
