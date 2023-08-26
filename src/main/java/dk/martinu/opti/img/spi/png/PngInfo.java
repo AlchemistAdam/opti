@@ -41,7 +41,7 @@ public class PngInfo {
 
     public final int width;
     public final int height;
-    public final int bitDepth; // TODO byte or int?
+    public final BitDepth bitDepth; // TODO byte or int?
     public final ColorType colorType;
     // TODO remove unless used by decoders
     public final byte compressionMethod;
@@ -90,10 +90,7 @@ public class PngInfo {
             throw new ImageDataException("invalid image height {%d}", height);
         }
 
-        bitDepth = chunk.data()[8];
-        if (bitDepth != 1 && bitDepth != 2 && bitDepth != 4 && bitDepth != 8 && bitDepth != 16) {
-            throw new InvalidImageException("invalid bit depth {%d}", bitDepth);
-        }
+        bitDepth = BitDepth.get(chunk.data()[8]);
 
         colorType = ColorType.get(chunk.data()[9]);
         switch (colorType) {
@@ -179,7 +176,7 @@ public class PngInfo {
             img = new GrayscaleImage(width, height);
 
             /* sample depth is unchanged */
-            if (bitDepth == 8) {
+            if (bitDepth == b8) {
                 // filter transparent samples and set to background
                 if (transparency != null) {
                     // low-order byte of background color
@@ -196,7 +193,7 @@ public class PngInfo {
             }
 
             /* sample depth is downscaled */
-            else if (bitDepth == 16) {
+            else if (bitDepth == b16) {
                 // filter transparent samples and set to background
                 if (transparency != null) {
                     // high-order byte of background color
@@ -215,7 +212,7 @@ public class PngInfo {
             }
 
             /* sample depth is upscaled */
-            else if (bitDepth == 4) {
+            else if (bitDepth == b4) {
                 // filter transparent samples and set to background
                 if (transparency != null) {
                     // low-order byte of transparent color, masked
@@ -252,7 +249,7 @@ public class PngInfo {
                     //@fmt:on
                 }
             }
-            else if (bitDepth == 2) {
+            else if (bitDepth == b2) {
                 byte[] data_2 = idatBuffer.getData();
                 // filter transparent samples and set to background
                 if (transparency != null) {
@@ -405,8 +402,8 @@ public class PngInfo {
         if (len % 3 != 0) {
             throw new ImageDataException("invalid PLTE chunk data length {%d}", len);
         }
-        if ((len / 3) > (2 << bitDepth - 1)) {
-            throw new InvalidImageException(
+        if ((len / 3) > (2 << bitDepth.value - 1)) {
+            throw new ImageDataException(
                     "PLTE chunk data length is too large for bit depth {%d, %d}", len, bitDepth);
         }
 
