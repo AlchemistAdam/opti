@@ -1,10 +1,7 @@
 package dk.martinu.opti.img.spi.png;
 
 import dk.martinu.opti.img.OptiImage;
-import dk.martinu.opti.img.spi.Chunk;
-import dk.martinu.opti.img.spi.ChunkReader;
-import dk.martinu.opti.img.spi.ImageDecoder;
-import dk.martinu.opti.img.spi.InvalidImageException;
+import dk.martinu.opti.img.spi.*;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -21,13 +18,13 @@ public class PngImageDecoder implements ImageDecoder {
         return new PngImageDecoder();
     }
 
-    protected void validateFileHeader(FileChannel in) throws IOException, InvalidImageException {
+    protected void validateFileHeader(FileChannel in) throws IOException, ImageFormatException {
         ByteBuffer buffer = ByteBuffer.allocate(8);
         if (in.read(buffer) != buffer.capacity()) {
             throw new IOException("missing PNG file header");
         }
         if (!isFileHeaderValid(buffer.array())) {
-            throw new InvalidImageException("invalid PNG file header");
+            throw new ImageFormatException("invalid PNG file header");
         }
     }
 
@@ -65,12 +62,12 @@ public class PngImageDecoder implements ImageDecoder {
             while ((chunk = reader.getChunk()).type() != ChunkType.IEND)
                 info.update(chunk);
             if (chunk.data().length != 0) {
-                throw new InvalidImageException("invalid IEND chunk");
+                throw new ImageException("invalid IEND chunk");
             }
             // create image from updated info
             return info.createImage();
         }
-        catch (Exception e) {
+        catch (ImageException e) {
             throw new IOException("could not read PNG image from file " + path, e);
         }
     }
