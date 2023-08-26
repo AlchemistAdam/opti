@@ -8,6 +8,11 @@ public class ByteImage extends OptiImage {
     }
 
     @Override
+    public OptiImage allocate() {
+        return new ByteImage(width, height, channels);
+    }
+
+    @Override
     public byte getSample(int x, int y, int channel) {
         return data[x + y * width + channel];
     }

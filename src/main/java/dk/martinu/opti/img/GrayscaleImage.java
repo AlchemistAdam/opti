@@ -11,4 +11,9 @@ public class GrayscaleImage extends ByteImage {
         pixel[0] = data[x + y * width];
         return pixel;
     }
+
+    @Override
+    public OptiImage allocate() {
+        return new GrayscaleImage(width, height);
+    }
 }

@@ -7,6 +7,11 @@ public class RgbImage extends ByteImage {
     }
 
     @Override
+    public OptiImage allocate() {
+        return new RgbImage(width, height);
+    }
+
+    @Override
     public byte[] getPixel(int x, int y, byte[] pixel) {
         final int offset = x + y * height;
         pixel[0] = data[offset];
