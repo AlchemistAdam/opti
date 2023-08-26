@@ -85,11 +85,14 @@ public abstract class OptiImage {
             // number of bits used to store image data
             int nBits = width * height * channels * depth;
             nBytes = nBits / 8;
-            if (nBits % 8 != 0)
+            if (nBits % 8 != 0) {
                 nBytes += 1;
+            }
         }
         data = new byte[nBytes];
     }
+
+    public abstract OptiImage allocate();
 
     public abstract byte getSample(int x, int y, int channel);
 
