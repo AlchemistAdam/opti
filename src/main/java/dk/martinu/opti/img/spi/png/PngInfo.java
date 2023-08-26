@@ -4,13 +4,15 @@ import dk.martinu.opti.img.GrayscaleImage;
 import dk.martinu.opti.img.OptiImage;
 import dk.martinu.opti.img.RgbImage;
 import dk.martinu.opti.img.spi.Chunk;
-import dk.martinu.opti.img.spi.InvalidImageException;
+import dk.martinu.opti.img.spi.ImageDataException;
+import dk.martinu.opti.img.spi.ImageFormatException;
 
 import java.util.Objects;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import static dk.martinu.opti.Util.getInt;
+import static dk.martinu.opti.img.spi.png.BitDepth.*;
 import static dk.martinu.opti.img.spi.png.ChunkType.*;
 import static dk.martinu.opti.img.spi.png.ColorType.*;
 
@@ -20,6 +22,10 @@ public class PngInfo {
      * Constant for compression method 0 (deflate).
      */
     public static final int COMPRESSION_DEFLATE = 0;
+    /**
+     * Constant for filter method 0.
+     */
+    public static final int FILTER_0 = 0;
     /**
      * Constant for interlace method 0 (null).
      */
@@ -65,23 +71,23 @@ public class PngInfo {
      */
     protected boolean isIdatBufferClosed = false;
 
-    public PngInfo(Chunk chunk) throws InvalidImageException {
+    public PngInfo(Chunk chunk) throws ImageFormatException, ImageDataException {
         Objects.requireNonNull(chunk, "chunk is null");
         if (chunk.type() != IHDR) {
-            throw new InvalidImageException("missing IHDR chunk");
+            throw new ImageFormatException("missing IHDR chunk");
         }
         if (chunk.data().length != IHDR_LENGTH) {
-            throw new InvalidImageException("invalid IHDR chunk");
+            throw new ImageDataException("invalid IHDR chunk");
         }
 
         width = getInt(chunk.data());
         if (width < 1) {
-            throw new InvalidImageException("invalid image width {%d}", width);
+            throw new ImageDataException("invalid image width {%d}", width);
         }
 
         height = getInt(chunk.data(), 4);
         if (height < 1) {
-            throw new InvalidImageException("invalid image height {%d}", height);
+            throw new ImageDataException("invalid image height {%d}", height);
         }
 
         bitDepth = chunk.data()[8];
@@ -92,47 +98,50 @@ public class PngInfo {
         colorType = ColorType.get(chunk.data()[9]);
         switch (colorType) {
             case TRUECOLOR, GREYSCALE_ALPHA, TRUECOLOR_ALPHA -> {
-                if (bitDepth != 8 && bitDepth != 16) {
-                    throw new InvalidImageException("invalid bit depth for color type %s {%d}", colorType, bitDepth);
+                if (bitDepth != b8 && bitDepth != b16) {
+                    throw new ImageDataException("invalid bit depth for color type %s {%d}", colorType, bitDepth);
                 }
             }
             case INDEXED -> {
-                if (bitDepth == 16) {
-                    throw new InvalidImageException("invalid bit depth for color type %s {%d}", colorType, bitDepth);
+                if (bitDepth == b16) {
+                    throw new ImageDataException("invalid bit depth for color type %s {%d}", colorType, bitDepth);
                 }
             }
         }
 
         compressionMethod = chunk.data()[10];
         if (compressionMethod != COMPRESSION_DEFLATE) {
-            throw new InvalidImageException("invalid compression method {%d}", compressionMethod);
+            throw new ImageDataException("invalid compression method {%d}", compressionMethod);
         }
 
         filterMethod = chunk.data()[11];
+        if (filterMethod != FILTER_0) {
+            throw new ImageDataException("invalid filter method {%d}", filterMethod);
+        }
 
         interlaceMethod = chunk.data()[12];
         if (interlaceMethod != INTERLACE_NULL && interlaceMethod != INTERLACE_ADAM_7) {
-            throw new InvalidImageException("invalid interlace method {%d}", interlaceMethod);
+            throw new ImageDataException("invalid interlace method {%d}", interlaceMethod);
         }
     }
 
     // TODO create image
-    public OptiImage createImage() throws InvalidImageException {
+    public OptiImage createImage() throws ImageFormatException, ImageDataException {
         // https://www.w3.org/TR/png/#5ChunkOrdering
         if (colorType == INDEXED && palette == null) {
-            throw new InvalidImageException("missing PLTE chunk");
+            throw new ImageFormatException("missing PLTE chunk");
         }
         if (idatBuffer.isEmpty()) {
-            throw new InvalidImageException("missing IDAT chunk(s)");
+            throw new ImageFormatException("missing IDAT chunk(s)");
         }
 
-        // buffer of decompressed data
+        // buffer of decompressed, filtered image data
         ByteArrayBuffer dataBuffer = new ByteArrayBuffer();
-        // decompress image data
+        // decompress image data and store in buffer
         Inflater inflater = new Inflater();
         inflater.setInput(idatBuffer.getData()); // <- NOTE inflater uses array pointer; does not copy
         if (inflater.needsDictionary()) {
-            throw new InvalidImageException("cannot decompress image data");
+            throw new ImageDataException("cannot decompress image data");
         }
         try {
             while (!inflater.finished()) {
@@ -143,7 +152,7 @@ public class PngInfo {
             inflater.end();
         }
         catch (DataFormatException e) {
-            throw new InvalidImageException("an error occurred while decompressing image data", e);
+            throw new ImageDataException("an error occurred while decompressing image data", e);
         }
 
         byte[] data = dataBuffer.getData();
@@ -165,6 +174,7 @@ public class PngInfo {
         else if (colorType == TRUECOLOR_ALPHA) {
             img = new RgbImage(width, height);
         }
+        // TODO read from scanlines array not data array
         else if (colorType == GREYSCALE) {
             img = new GrayscaleImage(width, height);
 
@@ -372,28 +382,28 @@ public class PngInfo {
         return img;
     }
 
-    protected void update_PLTE(Chunk chunk) throws InvalidImageException {
+    protected void update_PLTE(Chunk chunk) throws ImageFormatException, ImageDataException {
         // https://www.w3.org/TR/png/#5ChunkOrdering
         if (palette != null) {
-            throw new InvalidImageException("image contains multiple PLTE chunks");
+            throw new ImageFormatException("image contains multiple PLTE chunks");
         }
         if (transparency != null) {
-            throw new InvalidImageException("PLTE chunk must precede tRNS chunk");
+            throw new ImageFormatException("PLTE chunk must precede tRNS chunk");
         }
         if (background != null) {
-            throw new InvalidImageException("PLTE chunk must precede bKGD chunk");
+            throw new ImageFormatException("PLTE chunk must precede bKGD chunk");
         }
         if (!idatBuffer.isEmpty()) {
-            throw new InvalidImageException("PLTE chunk must precede IDAT chunk(s)");
+            throw new ImageFormatException("PLTE chunk must precede IDAT chunk(s)");
         }
 
         // https://www.w3.org/TR/png/#11PLTE
         if (colorType == GREYSCALE || colorType == GREYSCALE_ALPHA) {
-            throw new InvalidImageException("image color type %s cannot have PLTE chunk", colorType);
+            throw new ImageDataException("image color type %s cannot have PLTE chunk", colorType);
         }
         final int len = chunk.data().length;
         if (len % 3 != 0) {
-            throw new InvalidImageException("invalid PLTE chunk data length {%d}", len);
+            throw new ImageDataException("invalid PLTE chunk data length {%d}", len);
         }
         if ((len / 3) > (2 << bitDepth - 1)) {
             throw new InvalidImageException(
@@ -403,13 +413,13 @@ public class PngInfo {
         palette = chunk.data();
     }
 
-    protected void update_tRNS(Chunk chunk) throws InvalidImageException {
+    protected void update_tRNS(Chunk chunk) throws ImageFormatException, ImageDataException {
         // https://www.w3.org/TR/png/#5ChunkOrdering
         if (colorType == INDEXED && palette == null) {
-            throw new InvalidImageException("PLTE chunk must precede tRNS chunk");
+            throw new ImageFormatException("PLTE chunk must precede tRNS chunk");
         }
         if (!idatBuffer.isEmpty()) {
-            throw new InvalidImageException("tRNS chunk must precede IDAT chunk(s)");
+            throw new ImageFormatException("tRNS chunk must precede IDAT chunk(s)");
         }
 
         // https://www.w3.org/TR/png/#11tRNS
@@ -423,53 +433,47 @@ public class PngInfo {
             }
             case INDEXED -> {
                 if (len > palette.length / 3) {
-                    throw new InvalidImageException("too many entries in tRNS chunk {%d}", len);
+                    throw new ImageDataException("too many entries in tRNS chunk {%d}", len);
                 }
             }
             case GREYSCALE_ALPHA, TRUECOLOR_ALPHA ->
-                    throw new InvalidImageException("image color type %s cannot have tRNS chunk", colorType);
+                    throw new ImageDataException("image color type %s cannot have tRNS chunk", colorType);
         }
 
         transparency = chunk.data();
     }
 
-    protected void update_IDAT(Chunk chunk) throws InvalidImageException {
+    protected void update_IDAT(Chunk chunk) throws ImageFormatException {
         // https://www.w3.org/TR/png/#5ChunkOrdering
         if (isIdatBufferClosed) {
-            throw new InvalidImageException("IDAT chunks must be consecutive");
+            throw new ImageFormatException("IDAT chunks must be consecutive");
         }
 
         idatBuffer.add(chunk.data());
     }
 
-    protected void update_bKGD(Chunk chunk) throws InvalidImageException {
+    protected void update_bKGD(Chunk chunk) throws ImageFormatException, ImageDataException {
         // https://www.w3.org/TR/png/#5ChunkOrdering
         if (colorType == INDEXED && palette == null) {
-            throw new InvalidImageException("PLTE chunk must precede bKGD chunk");
+            throw new ImageFormatException("PLTE chunk must precede bKGD chunk");
         }
         if (!idatBuffer.isEmpty()) {
-            throw new InvalidImageException("bKGD chunk must precede IDAT chunk(s)");
+            throw new ImageFormatException("bKGD chunk must precede IDAT chunk(s)");
         }
 
         // https://www.w3.org/TR/png/#11bKGD
         final int len = chunk.data().length;
-        switch (colorType) {
-            case INDEXED -> {
-                if (len != 1) {
-                    throw new InvalidImageException("invalid bKGD chunk data length {%d}", len);
-                }
-            }
-            case GREYSCALE, TRUECOLOR, GREYSCALE_ALPHA, TRUECOLOR_ALPHA -> {
-                if (len != 2) {
-                    throw new InvalidImageException("invalid bKGD chunk data length {%d}", len);
-                }
-            }
+        if (len != switch (colorType) {
+            case INDEXED -> 1;
+            case GREYSCALE, TRUECOLOR, GREYSCALE_ALPHA, TRUECOLOR_ALPHA -> 2;
+        }) {
+            throw new ImageDataException("invalid bKGD chunk data length {%d}", len);
         }
 
         background = chunk.data();
     }
 
-    public void update(Chunk chunk) throws InvalidImageException {
+    public void update(Chunk chunk) throws ImageFormatException, ImageDataException {
         Objects.requireNonNull(chunk, "chunk is null");
 
         // critical chunks
@@ -477,7 +481,7 @@ public class PngInfo {
             switch (chunk.type()) {
                 case PLTE -> update_PLTE(chunk);
                 case IDAT -> update_IDAT(chunk);
-                default -> throw new InvalidImageException(
+                default -> throw new ImageDataException(
                         "unknown critical chunk type %s", ChunkType.toString(chunk.type()));
             }
         }
@@ -507,15 +511,15 @@ public class PngInfo {
                 }
                 case hIST -> {
                     if (palette == null) {
-                        throw new InvalidImageException("PLTE chunk must precede hIST chunk");
+                        throw new ImageFormatException("PLTE chunk must precede hIST chunk");
                     }
                     if (!idatBuffer.isEmpty()) {
-                        throw new InvalidImageException("hIST chunk must precede IDAT chunk(s)");
+                        throw new ImageFormatException("hIST chunk must precede IDAT chunk(s)");
                     }
                 }
                 case sPLT, eXIf -> {
                     if (!idatBuffer.isEmpty()) {
-                        throw new InvalidImageException(
+                        throw new ImageFormatException(
                                 "%s chunk must precede IDAT chunk(s)", ChunkType.toString(chunk.type()));
                     }
                     // TODO log
@@ -523,11 +527,11 @@ public class PngInfo {
                 // color space chunks
                 case cHRM, gAMA, iCCP, sBIT, sRGB, cICP, mDCv, cLLi -> {
                     if (palette != null) {
-                        throw new InvalidImageException(
+                        throw new ImageFormatException(
                                 "%s chunk must precede PLTE chunk", ChunkType.toString(chunk.type()));
                     }
                     if (!idatBuffer.isEmpty()) {
-                        throw new InvalidImageException(
+                        throw new ImageFormatException(
                                 "%s chunk must precede IDAT chunk(s)", ChunkType.toString(chunk.type()));
                     }
                     // TODO log
