@@ -5,6 +5,7 @@ import java.util.Objects;
 public class ByteArrayBuffer {
 
     protected Node root = null;
+    protected Node cursor = null;
     protected int length = 0;
 
     public void add(byte[] array) {
@@ -20,7 +21,12 @@ public class ByteArrayBuffer {
         if (length < 0) {
             throw new IllegalArgumentException("length is negative");
         }
-        root = new Node(array, length, root);
+        if (root == null) {
+            root = cursor = new Node(array, length);
+        }
+        else {
+            cursor.next = cursor = new Node(array, length);
+        }
         this.length += length;
     }
 
@@ -44,6 +50,14 @@ public class ByteArrayBuffer {
         return data;
     }
 
-    public record Node(byte[] array, int length, ByteArrayBuffer.Node next) {
+    public static class Node {
+        public final byte[] array;
+        public final int length;
+        protected Node next;
+
+        public Node(byte[] array, int length) {
+            this.array = array;
+            this.length = length;
+        }
     }
 }
