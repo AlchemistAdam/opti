@@ -47,6 +47,7 @@ public abstract class OptiImage {
      * sample.
      */
     public final int depth;
+    // TODO store data array in subclasses, e.g. ByteImage
     /**
      * The image data. The length of the data array is equal to:
      * <pre>
@@ -76,6 +77,7 @@ public abstract class OptiImage {
         this.channels = channels;
         this.depth = depth;
 
+        // TODO this only works for bit depth := 8
         // required length of data array
         int nBytes;
         if (depth == 8) {
@@ -94,7 +96,24 @@ public abstract class OptiImage {
 
     public abstract OptiImage allocate();
 
+    public abstract OptiImage allocate(int width, int height);
+
     public abstract byte getSample(int x, int y, int channel);
+
+    public byte[] getSamples(int x, int y, int channel, byte[] dest) {
+        // number of samples to copy into dest
+        final int len = Math.min(dest.length, (width * height) - (x + y * width));
+        // i: n-th sample
+        for (int i = 0; i < len; i++) {
+            if (x < width) {
+                dest[i] = getSample(x++, y, channel);
+            }
+            else {
+                dest[i] = getSample(x = 0, y++, channel);
+            }
+        }
+        return dest;
+    }
 
     public byte[] getPixel(int x, int y, byte[] pixel) {
         for (int i = 0; i < channels; i++) {
@@ -102,4 +121,6 @@ public abstract class OptiImage {
         }
         return pixel;
     }
+
+    public abstract void setSample(int x, int y, int channel, byte s);
 }
