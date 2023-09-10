@@ -157,7 +157,6 @@ public class PngInfo {
 
         // reconstruct filtered image data
         if (interlaceMethod == INTERLACE_NULL) {
-
             // scanline length in bytes
             final int len;
             if (colorType != INDEXED) {
@@ -172,7 +171,6 @@ public class PngInfo {
             else {
                 len = width;
             }
-
             FilterMethod fm = new FilterMethod_0();
             dest = fm.reconstruct(src, height, len);
         }
@@ -194,7 +192,7 @@ public class PngInfo {
         else if (colorType == TRUECOLOR_ALPHA) {
             img = new RgbImage(width, height);
         }
-        // TODO read from scanlines array not data array
+
         else if (colorType == GREYSCALE) {
             img = new GrayscaleImage(width, height);
 
@@ -204,15 +202,15 @@ public class PngInfo {
                 if (transparency != null) {
                     // low-order byte of background color
                     final byte bkgd = background != null ? background[1] : 0;
-                    for (int i = 0; i < src.length; i++) {
-                        if (src[i] == transparency[1]) {
-                            src[i] = bkgd;
+                    for (int i = 0; i < dest.length; i++) {
+                        if (dest[i] == transparency[1]) {
+                            dest[i] = bkgd;
                             break;
                         }
                     }
                 }
                 // transfer samples directly
-                System.arraycopy(src, 0, img.data, 0, src.length);
+                System.arraycopy(dest, 0, img.data, 0, dest.length);
             }
 
             /* sample depth is downscaled */
@@ -221,16 +219,16 @@ public class PngInfo {
                 if (transparency != null) {
                     // high-order byte of background color
                     final byte bkgd = background != null ? background[0] : 0;
-                    for (int i = 0; i < src.length; i += 2) {
-                        if (src[i] == transparency[0] && src[i + 1] == transparency[1]) {
-                            src[i] = bkgd;
+                    for (int i = 0; i < dest.length; i += 2) {
+                        if (dest[i] == transparency[0] && dest[i + 1] == transparency[1]) {
+                            dest[i] = bkgd;
                             break;
                         }
                     }
                 }
                 // transfer high-order bytes into image data array
-                for (int i = 0, k = 0; i < src.length; i += 2, k = i >> 1) {
-                    img.data[k] = src[i];
+                for (int i = 0, k = 0; i < dest.length; i += 2, k = i >> 1) {
+                    img.data[k] = dest[i];
                 }
             }
 
@@ -244,8 +242,8 @@ public class PngInfo {
                     // low-order byte of background color, masked
                     int bkgd = background != null ? background[1] & 0x0F : 0;
                     bkgd = bkgd << 4 | bkgd;
-                    for (int i = 0; i < src.length; i++) {
-                        int b = src[i];
+                    for (int i = 0; i < dest.length; i++) {
+                        int b = dest[i];
                         int s0 = b & 0xF0;
                         int s1 = b & 0x0F;
                         if ((s0 & trns) == s0) {
@@ -256,13 +254,13 @@ public class PngInfo {
                         }
                         int f = s0 | s1;
                         if (f != (b & 0xFF)) {
-                            src[i] = (byte) f;
+                            dest[i] = (byte) f;
                         }
                     }
                 }
                 // split bytes and transfer into image data array
-                for (int i = 0, k = 0; i < src.length; i++, k = i << 1) {
-                    int b = src[i];
+                for (int i = 0, k = 0; i < dest.length; i++, k = i << 1) {
+                    int b = dest[i];
                     int s0 = b & 0xF0;
                     int s1 = b & 0x0F;
                     // left bit replication TESTME left bit replication
@@ -333,8 +331,8 @@ public class PngInfo {
                     if (trns == bkgd) {
                         break filterTransparent;
                     }
-                    for (int i = 0; i < src.length; i++) {
-                        int b = src[i];
+                    for (int i = 0; i < dest.length; i++) {
+                        int b = dest[i];
                         int s0 = b & 0x01;
                         int s1 = b & 0x02;
                         int s2 = b & 0x04;
@@ -370,13 +368,13 @@ public class PngInfo {
                         }
                         int f = s0 | s1 | s2 | s3 | s4 | s5 | s6 | s7;
                         if (f != (b & 0xFF)) {
-                            src[i] = (byte) f;
+                            dest[i] = (byte) f;
                         }
                     }
                 }
                 // split bytes and transfer into image data array
-                for (int i = 0, k = 0; i < src.length; i++, k = i << 3) {
-                    int b = src[i];
+                for (int i = 0, k = 0; i < dest.length; i++, k = i << 3) {
+                    int b = dest[i];
                     //@fmt:off
                     img.data[k]     = (byte) ((b & 0x80) == 0 ? 0 : 0xFF);
                     img.data[k + 1] = (byte) ((b & 0x40) == 0 ? 0 : 0xFF);
@@ -390,10 +388,12 @@ public class PngInfo {
                 }
             }
         }
+
         // TODO greyscale alpha
         else if (colorType == GREYSCALE_ALPHA) {
             img = new GrayscaleImage(width, height);
         }
+
         // TODO indexed
         else /* if (colorType == INDEXED) */ {
             img = new RgbImage(width, height);
