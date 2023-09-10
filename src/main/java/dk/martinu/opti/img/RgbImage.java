@@ -18,7 +18,7 @@ public class RgbImage extends ByteImage {
 
     @Override
     public byte[] getPixel(int x, int y, byte[] pixel) {
-        final int offset = x + y * height;
+        final int offset = (x + y * height) * 3;
         pixel[0] = data[offset];
         pixel[1] = data[offset + 1];
         pixel[2] = data[offset + 2];
