@@ -4,8 +4,15 @@ import dk.martinu.opti.img.spi.ImageDataException;
 
 public class FilterMethod_0 implements FilterMethod {
 
+    public static final int NONE = 0;
+    public static final int SUB = 1;
+    public static final int UP = 2;
+    public static final int AVERAGE = 3;
+    public static final int PAETH = 4;
+
     /**
      * DOC reconstruct
+     *
      * @param src   the filtered bytes source
      * @param lines the number of scanlines
      * @param len   the length of a reconstructed scanline
@@ -30,11 +37,11 @@ public class FilterMethod_0 implements FilterMethod {
             // filter type preceding filtered bytes in scanline
             int filterType = src[j - 1];
 
-            if (filterType == FilterType.NONE) {
+            if (filterType == NONE) {
                 System.arraycopy(src, j, dest, k, len);
             }
 
-            else if (filterType == FilterType.SUB) {
+            else if (filterType == SUB) {
                 int prev = 0;
                 for (int max = j + len; j < max; j++, k++) {
                     prev = src[j] + prev;
@@ -42,7 +49,7 @@ public class FilterMethod_0 implements FilterMethod {
                 }
             }
 
-            else if (filterType == FilterType.UP) {
+            else if (filterType == UP) {
                 if (i == 0) {
                     System.arraycopy(src, j, dest, k, len);
                 }
@@ -53,7 +60,7 @@ public class FilterMethod_0 implements FilterMethod {
                 }
             }
 
-            else if (filterType == FilterType.AVERAGE) {
+            else if (filterType == AVERAGE) {
                 int prev = 0;
                 if (i == 0) {
                     for (int max = j + len; j < max; j++, k++) {
@@ -70,7 +77,7 @@ public class FilterMethod_0 implements FilterMethod {
             }
 
             // https://www.w3.org/TR/png/#9Filter-type-4-Paeth
-            else if (filterType == FilterType.PAETH) {
+            else if (filterType == PAETH) {
                 if (i == 0) {
                     int prev = 0;
                     for (int max = j + len; j < max; j++, k++) {
