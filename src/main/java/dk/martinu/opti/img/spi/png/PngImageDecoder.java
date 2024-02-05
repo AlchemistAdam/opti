@@ -59,8 +59,9 @@ public class PngImageDecoder implements ImageDecoder {
             final PngInfo info = new PngInfo(reader.getChunk());
             // read remaining chunks and update info
             Chunk chunk;
-            while ((chunk = reader.getChunk()).type() != ChunkType.IEND)
+            while ((chunk = reader.getChunk()).type() != ChunkType.IEND) {
                 info.update(chunk);
+            }
             if (chunk.data().length != 0) {
                 throw new ImageException("invalid IEND chunk");
             }

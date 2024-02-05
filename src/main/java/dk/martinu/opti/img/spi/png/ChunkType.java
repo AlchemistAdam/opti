@@ -1,6 +1,6 @@
 package dk.martinu.opti.img.spi.png;
 
-public class ChunkType {
+final class ChunkType {
 
     public static final int IHDR = 'I' << 24 | 'H' << 16 | 'D' << 8 | 'R';
     public static final int PLTE = 'P' << 24 | 'L' << 16 | 'T' << 8 | 'E';
@@ -25,7 +25,7 @@ public class ChunkType {
     public static final int eXIf = 'e' << 24 | 'X' << 16 | 'I' << 8 | 'f';
     public static final int tIME = 't' << 24 | 'I' << 16 | 'M' << 8 | 'E';
 
-    public static String toString(int chunkType) {
+    static String toString(int chunkType) {
         return String.copyValueOf(new char[] {
                 //@fmt:off
                 (char) ((chunkType >> 24) & 0xFF),
@@ -35,4 +35,6 @@ public class ChunkType {
                 //@fmt:on
         });
     }
+
+    private ChunkType() { }
 }

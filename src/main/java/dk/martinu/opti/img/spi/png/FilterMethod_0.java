@@ -2,105 +2,106 @@ package dk.martinu.opti.img.spi.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
-public class FilterMethod_0 implements FilterMethod {
+final class FilterMethod_0 implements FilterMethod {
 
-    public static final int NONE = 0;
-    public static final int SUB = 1;
-    public static final int UP = 2;
-    public static final int AVERAGE = 3;
-    public static final int PAETH = 4;
+    private static final int TYPE_NONE = 0;
+    private static final int TYPE_SUB = 1;
+    private static final int TYPE_UP = 2;
+    private static final int TYPE_AVERAGE = 3;
+    private static final int TYPE_PAETH = 4;
 
     /**
-     * DOC reconstruct
+     * DOC revert
      *
-     * @param src   the filtered bytes source
-     * @param lines the number of scanlines
-     * @param len   the length of a reconstructed scanline
+     * @param data   the filtered bytes source
+     * @param offset index offset in the samples array
+     * @param lines  the number of scanlines
+     * @param nBytes the number of bytes in a scanline
      * @return
      * @throws ImageDataException
      */
     @Override
-    public byte[] reconstruct(byte[] src, int lines, int len) throws ImageDataException {
+    public byte[] revert(byte[] data, int offset, int lines, int nBytes) throws ImageDataException {
         // destination for reconstructed bytes
-        byte[] dest = new byte[src.length - lines];
+        byte[] rec = new byte[data.length - lines];
         /*
         reconstruct filtered bytes
         https://www.w3.org/TR/png/#9Filter-types
         ----
         i: current scanline
-        j: index of filtered bytes in src
-        k: index of reconstructed bytes in dest
+        j: index of filtered bytes in samples
+        k: index of reconstructed bytes in rec
         ----
         j and k are assigned in outer loop and incremented in inner loops
          */
-        for (int i = 0, j = 1, k = 0; i < lines; i++, j = i * (len + 1) + 1, k = i * len) {
+        for (int i = 0, j = offset + 1, k = 0; i < lines; i++, j = i * (nBytes + 1) + 1, k = i * nBytes) {
             // filter type preceding filtered bytes in scanline
-            int filterType = src[j - 1];
+            int filterType = data[j - 1];
 
-            if (filterType == NONE) {
-                System.arraycopy(src, j, dest, k, len);
+            if (filterType == TYPE_NONE) {
+                System.arraycopy(data, j, rec, k, nBytes);
             }
 
-            else if (filterType == SUB) {
+            else if (filterType == TYPE_SUB) {
                 int prev = 0;
-                for (int max = j + len; j < max; j++, k++) {
-                    prev = src[j] + prev;
-                    dest[k] = (byte) prev;
+                for (int max = j + nBytes; j < max; j++, k++) {
+                    prev = data[j] + prev;
+                    rec[k] = (byte) prev;
                 }
             }
 
-            else if (filterType == UP) {
+            else if (filterType == TYPE_UP) {
                 if (i == 0) {
-                    System.arraycopy(src, j, dest, k, len);
+                    System.arraycopy(data, j, rec, k, nBytes);
                 }
                 else {
-                    for (int max = j + len; j < max; j++, k++) {
-                        dest[k] = (byte) (src[j] + dest[k - len]);
+                    for (int max = j + nBytes; j < max; j++, k++) {
+                        rec[k] = (byte) (data[j] + rec[k - nBytes]);
                     }
                 }
             }
 
-            else if (filterType == AVERAGE) {
+            else if (filterType == TYPE_AVERAGE) {
                 int prev = 0;
                 if (i == 0) {
-                    for (int max = j + len; j < max; j++, k++) {
-                        prev = src[j] + ((prev & 0xFF) >>> 1);
-                        dest[k] = (byte) prev;
+                    for (int max = j + nBytes; j < max; j++, k++) {
+                        prev = data[j] + ((prev & 0xFF) >>> 1);
+                        rec[k] = (byte) prev;
                     }
                 }
                 else {
-                    for (int max = j + len; j < max; j++, k++) {
-                        prev = src[j] + ((prev + dest[k - len] & 0xFF) >>> 1);
-                        dest[k] = (byte) prev;
+                    for (int max = j + nBytes; j < max; j++, k++) {
+                        prev = data[j] + ((prev + rec[k - nBytes] & 0xFF) >>> 1);
+                        rec[k] = (byte) prev;
                     }
                 }
             }
 
             // https://www.w3.org/TR/png/#9Filter-type-4-Paeth
-            else if (filterType == PAETH) {
+            else if (filterType == TYPE_PAETH) {
                 if (i == 0) {
                     int prev = 0;
-                    for (int max = j + len; j < max; j++, k++) {
-                        prev = src[j] + prev;
-                        dest[k] = (byte) prev;
+                    for (int max = j + nBytes; j < max; j++, k++) {
+                        prev = data[j] + prev;
+                        rec[k] = (byte) prev;
                     }
                 }
                 else {
-                    // TODO it might be necessary to mask ints for abs to work correctly
+                    // TODO it might be necessary to mask bytes for abs to work correctly
                     // reconstructed byte variables
-                    int a, b = dest[k - len], c;
+                    int a, b = rec[k - nBytes], c;
                     // paeth function variables
                     int p, pa, pb, pc, pr;
 
-                    final int max = j + len;
+                    final int max = j + nBytes;
                     // the predictor (pr) is always 'b' for the first byte
-                    int prev = src[j++] + b;
-                    dest[k++] = (byte) prev;
+                    int prev = data[j++] + b;
+                    rec[k++] = (byte) prev;
 
                     while (j < max) {
                         // swap over 'c' and 'a', and reassign 'b'
                         c = b;
-                        b = dest[k - len];
+                        b = rec[k - nBytes];
                         a = prev;
                         // update paeth variables
                         p = a + b - c;
@@ -118,8 +119,8 @@ public class FilterMethod_0 implements FilterMethod {
                             pr = c;
                         }
 
-                        prev = src[j++] + pr;
-                        dest[k++] = (byte) prev;
+                        prev = data[j++] + pr;
+                        rec[k++] = (byte) prev;
                     }
                 }
             }
@@ -127,6 +128,6 @@ public class FilterMethod_0 implements FilterMethod {
                 throw new ImageDataException("invalid filter type {%d}", filterType);
             }
         }
-        return dest;
+        return rec;
     }
 }

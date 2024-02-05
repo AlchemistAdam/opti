@@ -4,5 +4,10 @@ import dk.martinu.opti.img.spi.ImageDataException;
 
 public interface FilterMethod {
 
-    byte[] reconstruct(byte[] src, int lines, int len) throws ImageDataException;
+
+    default byte[] revert(byte[] data, int lines, int nBytes) throws ImageDataException {
+        return revert(data, 0, lines, nBytes);
+    }
+
+    byte[] revert(byte[] data, int offset, int lines, int nBytes) throws ImageDataException;
 }

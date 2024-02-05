@@ -2,11 +2,11 @@ package dk.martinu.opti.img.spi.png;
 
 import java.util.Objects;
 
-public class ByteArrayBuffer {
+final class ByteArrayBuffer {
 
-    protected Node root = null;
-    protected Node cursor = null;
-    protected int length = 0;
+    private Node root = null;
+    private Node cursor = null;
+    private int length = 0;
 
     public void add(byte[] array) {
         Objects.requireNonNull(array, "array is null");
