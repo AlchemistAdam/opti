@@ -2,13 +2,17 @@ package dk.martinu.opti.img;
 
 public class RgbImage extends ByteImage {
 
+    public RgbImage(int width, int height) {
+        super(width, height, 3);
+    }
+
+    public RgbImage(int width, int height, byte[] samples) {
+        super(width, height, 3, samples);
+    }
+
     @Override
     public OptiImage allocate(int width, int height) {
         return new RgbImage(width, height);
-    }
-
-    public RgbImage(int width, int height) {
-        super(width, height, 3);
     }
 
     @Override

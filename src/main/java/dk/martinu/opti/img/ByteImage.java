@@ -6,11 +6,15 @@ public class ByteImage extends OptiImage {
         super(width, height, channels, 8);
     }
 
+    protected ByteImage(int width, int height, int channels, byte[] samples) {
+        super(width, height, channels, 8, samples);
+    }
+
     @Override
     public byte[] getSamples(int x, int y, int channel, byte[] dest) {
         // number of samples to copy into dest
         final int len = Math.min(dest.length, (width * height) - (x + y * width));
-        // offset into data buffer
+        // offset into samples buffer
         final int offset = (x + y * width) * channels + channel;
         // i: n-th sample
         for (int i = 0; i < len; i++) {

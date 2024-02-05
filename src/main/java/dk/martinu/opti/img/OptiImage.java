@@ -47,9 +47,9 @@ public abstract class OptiImage {
      * sample.
      */
     public final int depth;
-    // TODO store data array in subclasses, e.g. ByteImage
+    // TODO store samples array in subclasses, e.g. ByteImage
     /**
-     * The image data. The length of the data array is equal to:
+     * The image samples. The length of the samples array is equal to:
      * <pre>
      *     width * height * channels * depth / 8
      * </pre>
@@ -78,13 +78,14 @@ public abstract class OptiImage {
         this.depth = depth;
 
         // TODO this only works for bit depth := 8
-        // required length of data array
+        // required length of samples array
         int nBytes;
         if (depth == 8) {
             nBytes = width * height * channels;
         }
         else {
-            // number of bits used to store image data
+            // TODO change so each scanline starts at byte boundaries
+            // number of bits used to store image samples
             int nBits = width * height * channels * depth;
             nBytes = nBits / 8;
             if (nBits % 8 != 0) {
@@ -92,6 +93,30 @@ public abstract class OptiImage {
             }
         }
         data = new byte[nBytes];
+    }
+
+    protected OptiImage(int width, int height, int channels, int depth, byte[] samples) {
+        if (width < 1) {
+            throw new IllegalArgumentException("width is less than 1");
+        }
+        if (height < 1) {
+            throw new IllegalArgumentException("height is less than 1");
+        }
+        if (channels < 1) {
+            throw new IllegalArgumentException("channels is less than 1");
+        }
+        if (depth < 1) {
+            throw new IllegalArgumentException("depth is less than 1");
+        }
+        if (depth > 8) {
+            throw new IllegalArgumentException("depth is greater than 8");
+        }
+        this.width = width;
+        this.height = height;
+        this.channels = channels;
+        this.depth = depth;
+        // TODO validate data length
+        this.data = samples;
     }
 
     public abstract OptiImage allocate();
