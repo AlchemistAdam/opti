@@ -68,7 +68,7 @@ public class PngImageDecoder implements ImageDecoder {
             // create image from updated info
             return info.createImage();
         }
-        catch (ImageException e) {
+        catch (IOException | ImageException e) {
             throw new IOException("could not read PNG image from file " + path, e);
         }
     }
