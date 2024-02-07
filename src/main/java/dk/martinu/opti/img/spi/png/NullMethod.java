@@ -2,8 +2,6 @@ package dk.martinu.opti.img.spi.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
-import java.util.function.IntUnaryOperator;
-
 final class NullMethod implements InterlaceMethod {
 
     static final NullMethod INSTANCE = new NullMethod();
@@ -19,7 +17,8 @@ final class NullMethod implements InterlaceMethod {
         // pixel setter for reduced image samples
         PixelSetter setter = colorType.getPixelSetter(bitDepth, img, palette, transparency, background);
 
-        int components = colorType.usesAlpha() ? colorType.getComponentCount() - 1 : colorType.getComponentCount();
+        // number of components for each pixel in destination array
+        int components = colorType.usesTruecolor() ? 3 : 1;
         // destination array for PNG pixel samples
         byte[] dest = new byte[width * height * components];
         // index in dest for next pixel sample

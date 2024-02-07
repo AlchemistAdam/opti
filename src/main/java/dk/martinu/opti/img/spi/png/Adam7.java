@@ -38,7 +38,8 @@ final class Adam7 implements InterlaceMethod {
                 4, 5, 4, 5, 4, 5, 4, 5,
                 6, 6, 6, 6, 6, 6, 6, 6};
 
-        int components = colorType.usesAlpha() ? colorType.getComponentCount() - 1 : colorType.getComponentCount();
+        // number of components for each pixel in destination array
+        int components = colorType.usesTruecolor() ? 3 : 1;
         // destination array for PNG pixel samples
         byte[] dest = new byte[width * height * components];
         // index in dest for next pixel sample
