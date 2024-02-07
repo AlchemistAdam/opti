@@ -94,8 +94,6 @@ public final class Grayscale implements ColorType {
             // assigned directly instead of replicating bits
             byte s = b == 0 ? 0 : (byte) 0xFF;
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
         }
     }
 
@@ -109,8 +107,6 @@ public final class Grayscale implements ColorType {
         public void setNext(byte[] dest, int index) {
             byte s = samples[i];
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
             i += COMPONENT_COUNT * 2;
         }
     }
@@ -138,8 +134,6 @@ public final class Grayscale implements ColorType {
                 s = bkgd[0];
             }
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
             i += COMPONENT_COUNT * 2;
         }
     }
@@ -201,8 +195,6 @@ public final class Grayscale implements ColorType {
             // assigned directly instead of replicating bits
             byte s = b == 0 ? 0 : (byte) 0xFF;
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
         }
     }
 
@@ -243,8 +235,6 @@ public final class Grayscale implements ColorType {
                 default -> (byte) 0xFF; // case 3
             };
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
         }
     }
 
@@ -294,8 +284,6 @@ public final class Grayscale implements ColorType {
                 default -> (byte) 0xFF; // case 3
             };
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
         }
     }
 
@@ -321,8 +309,6 @@ public final class Grayscale implements ColorType {
                 i += COMPONENT_COUNT;
             }
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
         }
     }
 
@@ -359,8 +345,6 @@ public final class Grayscale implements ColorType {
                 s = (byte) (b << 4 | b);
             }
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
         }
     }
 
@@ -374,8 +358,6 @@ public final class Grayscale implements ColorType {
         public void setNext(byte[] dest, int index) {
             byte s = samples[i];
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
             i += COMPONENT_COUNT;
         }
     }
@@ -399,8 +381,6 @@ public final class Grayscale implements ColorType {
                 s = bkgd[1];
             }
             dest[index]     = s;
-            dest[index + 1] = s;
-            dest[index + 2] = s;
             i += COMPONENT_COUNT;
         }
     }
