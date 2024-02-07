@@ -150,7 +150,7 @@ public class PngInfo {
                 case PLTE -> update_PLTE(chunk);
                 case IDAT -> update_IDAT(chunk);
                 default -> throw new ImageDataException(
-                        "unknown critical chunk type %s", ChunkType.toString(chunk.type()));
+                        "unknown critical chunk type %s", Chunk.typeToString(chunk.type()));
             }
         }
 
@@ -188,7 +188,7 @@ public class PngInfo {
                 case sPLT, eXIf -> {
                     if (!idatBuffer.isEmpty()) {
                         throw new ImageFormatException(
-                                "%s chunk must precede IDAT chunks", ChunkType.toString(chunk.type()));
+                                "%s chunk must precede IDAT chunks", Chunk.typeToString(chunk.type()));
                     }
                     // TODO log
                 }
@@ -196,11 +196,11 @@ public class PngInfo {
                 case cHRM, gAMA, iCCP, sBIT, sRGB, cICP, mDCv, cLLi -> {
                     if (palette != null) {
                         throw new ImageFormatException(
-                                "%s chunk must precede PLTE chunk", ChunkType.toString(chunk.type()));
+                                "%s chunk must precede PLTE chunk", Chunk.typeToString(chunk.type()));
                     }
                     if (!idatBuffer.isEmpty()) {
                         throw new ImageFormatException(
-                                "%s chunk must precede IDAT chunks", ChunkType.toString(chunk.type()));
+                                "%s chunk must precede IDAT chunks", Chunk.typeToString(chunk.type()));
                     }
                     // TODO log
                 }
