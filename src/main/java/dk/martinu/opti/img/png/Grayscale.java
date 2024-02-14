@@ -1,7 +1,6 @@
-package dk.martinu.opti.img.spi.png;
+package dk.martinu.opti.img.png;
 
-import static dk.martinu.opti.img.spi.png.PngInfo.*;
-import static dk.martinu.opti.img.spi.png.InconstantPixelSetter.wrapIfInconstant;
+import static dk.martinu.opti.img.png.PngInfo.*;
 
 public final class Grayscale implements ColorType {
 

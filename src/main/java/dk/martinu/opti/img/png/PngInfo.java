@@ -1,4 +1,4 @@
-package dk.martinu.opti.img.spi.png;
+package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.*;
 import dk.martinu.opti.img.spi.*;
@@ -11,7 +11,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import static dk.martinu.opti.Util.getInt;
-import static dk.martinu.opti.img.spi.png.ChunkType.*;
+import static dk.martinu.opti.img.png.ChunkType.*;
 
 public class PngInfo {
 

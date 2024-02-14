@@ -1,11 +1,11 @@
-package dk.martinu.opti.img.spi.png;
+package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
 import java.util.Objects;
 
-import static dk.martinu.opti.img.spi.png.PngInfo.BIT_DEPTH_16;
-import static dk.martinu.opti.img.spi.png.PngInfo.BIT_DEPTH_8;
+import static dk.martinu.opti.img.png.PngInfo.BIT_DEPTH_16;
+import static dk.martinu.opti.img.png.PngInfo.BIT_DEPTH_8;
 
 public final class TruecolorAlpha implements ColorType {
 

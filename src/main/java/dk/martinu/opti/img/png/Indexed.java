@@ -1,9 +1,9 @@
-package dk.martinu.opti.img.spi.png;
+package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
-import static dk.martinu.opti.img.spi.png.PngInfo.*;
-import static dk.martinu.opti.img.spi.png.InconstantPixelSetter.wrapIfInconstant;
+import static dk.martinu.opti.img.png.PngInfo.*;
+import static dk.martinu.opti.img.png.InconstantPixelSetter.wrapIfInconstant;
 
 public final class Indexed implements ColorType {
 

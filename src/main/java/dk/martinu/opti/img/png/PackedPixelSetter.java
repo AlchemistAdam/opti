@@ -1,4 +1,4 @@
-package dk.martinu.opti.img.spi.png;
+package dk.martinu.opti.img.png;
 
 abstract class PackedPixelSetter extends AbstractPixelSetter {
 
