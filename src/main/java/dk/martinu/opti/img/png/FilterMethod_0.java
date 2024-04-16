@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2024, Adam Martinu. All rights reserved. Altering or
+ * removing copyright notices or this file header is not allowed.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");  you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,  WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
@@ -21,7 +37,7 @@ final class FilterMethod_0 implements FilterMethod {
      * @throws ImageDataException
      */
     @Override
-    public byte[] revert(byte[] data, int offset, int lines, int nBytes) throws ImageDataException {
+    public byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int offset, int lines, int nBytes) throws ImageDataException {
         // destination for reconstructed bytes
         byte[] rec = new byte[data.length - lines];
         /*
