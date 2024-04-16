@@ -22,20 +22,20 @@ public final class Grayscale implements ColorType {
             return switch (bitDepth) {
                 case BIT_DEPTH_16 -> new PixelSetter_16_Alpha(image, transparency, background);
                 case BIT_DEPTH_8 -> new PixelSetter_8_Alpha(image, transparency, background);
-                case BIT_DEPTH_4 -> wrapIfInconstant(bitDepth, image.width(), new PixelSetter_4_Alpha(image, transparency, background));
-                case BIT_DEPTH_2 -> wrapIfInconstant(bitDepth, image.width(), new PixelSetter_2_Alpha(image, transparency, background));
+                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_4_Alpha(image, transparency, background));
+                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_2_Alpha(image, transparency, background));
                 // BIT_DEPTH_1
-                default -> wrapIfInconstant(bitDepth, image.width(), new PixelSetter_1_Alpha(image, transparency, background));
+                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_1_Alpha(image, transparency, background));
             };
         }
         else {
             return switch (bitDepth) {
                 case BIT_DEPTH_16 -> new PixelSetter_16(image);
                 case BIT_DEPTH_8 -> new PixelSetter_8(image);
-                case BIT_DEPTH_4 -> wrapIfInconstant(bitDepth, image.width(), new PixelSetter_4(image));
-                case BIT_DEPTH_2 -> wrapIfInconstant(bitDepth, image.width(), new PixelSetter_2(image));
+                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_4(image));
+                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_2(image));
                 // BIT_DEPTH_1
-                default -> wrapIfInconstant(bitDepth, image.width(), new PixelSetter_1(image));
+                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_1(image));
             };
         }
     }
