@@ -27,100 +27,144 @@ final class FilterMethod_0 implements FilterMethod {
     private static final int TYPE_PAETH = 4;
 
     /**
-     * DOC revert
+     * DOC reconstruct
      *
-     * @param data   the filtered bytes source
-     * @param offset index offset in the samples array
-     * @param lines  the number of scanlines
-     * @param nBytes the number of bytes in a scanline
-     * @return
-     * @throws ImageDataException
+     * @param bitDepth  the image bit depth
+     * @param colorType the image color type
+     * @param filt      the filtered bytes source
+     * @param offset    index offset in the filt array
+     * @param lines     the number of scanlines to reconstruct
+     * @param nBytes    the number of bytes in a scanline (excluding the filter
+     *                  type byte)
+     * @return an array of reconstructed scanlines
+     * @throws ImageDataException if {@code filt} contains an invalid filter
+     *                            type byte
      */
+    // TODO remove debug print calls
     @Override
     public byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int offset, int lines, int nBytes) throws ImageDataException {
         // destination for reconstructed bytes
-        byte[] rec = new byte[data.length - lines];
-        /*
+        byte[] recon = new byte[filt.length - lines];
+
+        // the offset to subtract from an index in a scanline to get filter bytes 'a' and 'c'
+        int filterOffset;
+        if (bitDepth < 8) {
+            filterOffset = 1;
+        }
+        else {
+            int sampleSize = bitDepth / 8;
+            filterOffset = sampleSize * (colorType.usesTruecolor() ? 3 : 1);
+            if (colorType.usesAlpha()) {
+                filterOffset += sampleSize;
+            }
+        }
+        System.out.println("sample offset: " + filterOffset);
+/*
         reconstruct filtered bytes
         https://www.w3.org/TR/png/#9Filter-types
         ----
         i: current scanline
-        j: index of filtered bytes in samples
-        k: index of reconstructed bytes in rec
+        j: index in filt
+        k: index in recon
         ----
         j and k are assigned in outer loop and incremented in inner loops
          */
         for (int i = 0, j = offset + 1, k = 0; i < lines; i++, j = i * (nBytes + 1) + 1, k = i * nBytes) {
+            int filterTypeIndex = j - 1;
             // filter type preceding filtered bytes in scanline
-            int filterType = data[j - 1];
+            int filterType = filt[filterTypeIndex];
 
             if (filterType == TYPE_NONE) {
-                System.arraycopy(data, j, rec, k, nBytes);
+                System.out.println("filter type NONE");
+                System.arraycopy(filt, j, recon, k, nBytes);
             }
 
             else if (filterType == TYPE_SUB) {
-                int prev = 0;
+                System.out.println("filter type SUB");
                 for (int max = j + nBytes; j < max; j++, k++) {
-                    prev = data[j] + prev;
-                    rec[k] = (byte) prev;
+                    if (j - filterOffset <= filterTypeIndex) {
+                        recon[k] = filt[j];
+                    }
+                    else {
+                        recon[k] = (byte) ((filt[j] & 0xFF) + (recon[k - filterOffset] & 0xFF));
+                    }
                 }
             }
 
             else if (filterType == TYPE_UP) {
+                System.out.println("filter type UP");
                 if (i == 0) {
-                    System.arraycopy(data, j, rec, k, nBytes);
+                    System.arraycopy(filt, j, recon, k, nBytes);
                 }
                 else {
                     for (int max = j + nBytes; j < max; j++, k++) {
-                        rec[k] = (byte) (data[j] + rec[k - nBytes]);
+                        recon[k] = (byte) ((filt[j] & 0xFF) + (recon[k - nBytes] & 0xFF));
                     }
                 }
             }
 
+            // TODO use recon array
             else if (filterType == TYPE_AVERAGE) {
-                int prev = 0;
+                System.out.println("filter type AVERAGE");
                 if (i == 0) {
                     for (int max = j + nBytes; j < max; j++, k++) {
-                        prev = data[j] + ((prev & 0xFF) >>> 1);
-                        rec[k] = (byte) prev;
+                        if (j - filterOffset <= filterTypeIndex) {
+                            recon[k] = filt[j];
+                        }
+                        else {
+                            recon[k] = (byte) ((filt[j] & 0xFF) + ((recon[k - filterOffset] & 0xFF) >>> 1));
+                        }
                     }
                 }
                 else {
-                    for (int max = j + nBytes; j < max; j++, k++) {
-                        prev = data[j] + ((prev + rec[k - nBytes] & 0xFF) >>> 1);
-                        rec[k] = (byte) prev;
+                    for (int m, max = j + nBytes; j < max; j++, k++) {
+                        m = j - filterOffset;
+                        if (m <= filterTypeIndex) {
+                            recon[k] = (byte) ((filt[j] & 0xFF) + ((recon[k - nBytes] & 0xFF) >>> 1));
+                        }
+                        else {
+                            recon[k] = (byte) (((filt[m] & 0xFF) + ((recon[k - filterOffset] & 0xFF) + (recon[k - nBytes] & 0xFF)) >>> 1));
+                        }
                     }
                 }
             }
 
             // https://www.w3.org/TR/png/#9Filter-type-4-Paeth
             else if (filterType == TYPE_PAETH) {
+                System.out.println("filter type PAETH");
                 if (i == 0) {
-                    int prev = 0;
                     for (int max = j + nBytes; j < max; j++, k++) {
-                        prev = data[j] + prev;
-                        rec[k] = (byte) prev;
+                        if (j - filterOffset <= filterTypeIndex) {
+                            recon[k] = filt[j];
+                        }
+                        else {
+                            recon[k] = (byte) ((filt[j] & 0xFF) + (recon[k - filterOffset] & 0xFF));
+                        }
                     }
                 }
                 else {
-                    // TODO it might be necessary to mask bytes for abs to work correctly
-                    // reconstructed byte variables
-                    int a, b = rec[k - nBytes], c;
+                    // filter bytes
+                    int a, b = recon[k - nBytes] & 0xFF, c;
                     // paeth function variables
                     int p, pa, pb, pc, pr;
 
                     final int max = j + nBytes;
                     // the predictor (pr) is always 'b' for the first byte
-                    int prev = data[j++] + b;
-                    rec[k++] = (byte) prev;
+                    recon[k++] = (byte) ((filt[j++] & 0xFF) + b);
 
                     while (j < max) {
-                        // swap over 'c' and 'a', and reassign 'b'
-                        c = b;
-                        b = rec[k - nBytes];
-                        a = prev;
+                        // assign a, b and c
+                        if (j - filterOffset <= filterTypeIndex) {
+                            a = 0;
+                            c = 0;
+                        }
+                        else {
+                            a = recon[k - filterOffset] & 0xFF;
+                            c = recon[k - nBytes - filterOffset] & 0xFF;
+                        }
+                        b = recon[k - nBytes] & 0xFF;
                         // update paeth variables
-                        p = a + b - c;
+                        p  = a + b - c;
                         pa = Math.abs(p - a);
                         pb = Math.abs(p - b);
                         pc = Math.abs(p - c);
@@ -134,9 +178,7 @@ final class FilterMethod_0 implements FilterMethod {
                         else {
                             pr = c;
                         }
-
-                        prev = data[j++] + pr;
-                        rec[k++] = (byte) prev;
+                        recon[k++] = (byte) ((filt[j++] & 0xFF) + pr);
                     }
                 }
             }
@@ -144,6 +186,6 @@ final class FilterMethod_0 implements FilterMethod {
                 throw new ImageDataException("invalid filter type {%d}", filterType);
             }
         }
-        return rec;
+        return recon;
     }
 }
