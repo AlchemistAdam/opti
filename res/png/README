@@ -1,0 +1,7 @@
+The images in this folder are a subset of the PngSuite created by Willem van
+Schaik, and are included in this project solely for testing purposes of the PNG
+image decoder implementation.
+
+The LICENSE included in this folder applies to these images.
+
+See http://www.schaik.com/pngsuite/pngsuite.html for more details.
