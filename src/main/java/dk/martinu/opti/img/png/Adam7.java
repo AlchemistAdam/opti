@@ -20,6 +20,7 @@ import dk.martinu.opti.img.spi.ImageDataException;
 
 import java.util.function.IntUnaryOperator;
 
+// DOC Adam7
 final class Adam7 implements InterlaceMethod {
 
     static final Adam7 INSTANCE = new Adam7();
@@ -34,7 +35,7 @@ final class Adam7 implements InterlaceMethod {
         // pixel setters for reduced image samples
         PixelSetter[] setters = new PixelSetter[images.length];
         for (int i = 0; i < images.length; i++) {
-            if (images[i].samples().length > 0) {
+            if (images[i] != null && images[i].samples().length > 0) {
                 setters[i] = colorType.getPixelSetter(bitDepth, images[i], palette, transparency, background);
             }
             else {
