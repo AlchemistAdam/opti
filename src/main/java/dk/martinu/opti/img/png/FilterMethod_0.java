@@ -72,7 +72,7 @@ final class FilterMethod_0 implements FilterMethod {
         for (int i = 0, j = offset + 1, k = 0; i < lines; i++, j = i * (nBytes + 1) + 1, k = i * nBytes) {
             int filterTypeIndex = j - 1;
             // filter type preceding filtered bytes in scanline
-            int filterType = filt[filterTypeIndex];
+            int filterType = filt[filterTypeIndex] & 0xFF;
 
             if (filterType == TYPE_NONE) {
                 System.out.println("filter type NONE");
@@ -103,7 +103,6 @@ final class FilterMethod_0 implements FilterMethod {
                 }
             }
 
-            // TODO use recon array
             else if (filterType == TYPE_AVERAGE) {
                 System.out.println("filter type AVERAGE");
                 if (i == 0) {
@@ -123,7 +122,7 @@ final class FilterMethod_0 implements FilterMethod {
                             recon[k] = (byte) ((filt[j] & 0xFF) + ((recon[k - nBytes] & 0xFF) >>> 1));
                         }
                         else {
-                            recon[k] = (byte) (((filt[m] & 0xFF) + ((recon[k - filterOffset] & 0xFF) + (recon[k - nBytes] & 0xFF)) >>> 1));
+                            recon[k] = (byte) ((filt[j] & 0xFF) + (((recon[k - filterOffset] & 0xFF) + (recon[k - nBytes] & 0xFF)) >>> 1));
                         }
                     }
                 }
