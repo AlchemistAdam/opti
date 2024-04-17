@@ -181,6 +181,17 @@ public class PngImageDecoderTest {
     }
 
     /**
+     * Test factory that creates a stream of tests for all PNG files in the
+     * {@code /image-filtering} subdirectory.
+     *
+     * @return a stream of dynamic tests
+     */
+    @TestFactory
+    Stream<DynamicTest> pngFiltering() {
+        Path dir = Paths.get(ROOT + "/image-filtering");
+        return createTestsFromDir(dir);
+    }
+    /**
      * Utility method for test factories. Constructs a dynamic
      * {@link #decodeAndCompare(Path)} test for each PNG file in the specified
      * directory and returns them in a stream.
