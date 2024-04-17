@@ -42,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * that groups can be tested in isolation.
  */
 @DisplayName("PNG Decoder")
-public class PngTest {
+public class PngImageDecoderTest {
 
     /**
      * Relative root path for PNG image test files.
