@@ -44,7 +44,7 @@ final class FilterMethod_0 implements FilterMethod {
     @Override
     public byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int offset, int lines, int nBytes) throws ImageDataException {
         // destination for reconstructed bytes
-        byte[] recon = new byte[filt.length - lines];
+        byte[] recon = new byte[lines * nBytes];
 
         // the offset to subtract from an index in a scanline to get filter bytes 'a' and 'c'
         int filterOffset;
@@ -59,7 +59,7 @@ final class FilterMethod_0 implements FilterMethod {
             }
         }
         System.out.println("sample offset: " + filterOffset);
-/*
+        /*
         reconstruct filtered bytes
         https://www.w3.org/TR/png/#9Filter-types
         ----
@@ -69,7 +69,7 @@ final class FilterMethod_0 implements FilterMethod {
         ----
         j and k are assigned in outer loop and incremented in inner loops
          */
-        for (int i = 0, j = offset + 1, k = 0; i < lines; i++, j = i * (nBytes + 1) + 1, k = i * nBytes) {
+        for (int i = 0, j = offset + 1, k = 0; i < lines; i++, j = i * (nBytes + 1) + offset + 1, k = i * nBytes) {
             int filterTypeIndex = j - 1;
             // filter type preceding filtered bytes in scanline
             int filterType = filt[filterTypeIndex] & 0xFF;
