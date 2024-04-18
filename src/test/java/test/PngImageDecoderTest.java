@@ -35,11 +35,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test class for decoding PNG images with the Opti PNG decoder. Images are
  * decoded with Java Image IO (IIO) for comparison.
  * <p>
- * The PNG image files from
- * <a href="http://www.schaik.com/pngsuite/pngsuite.html">PngSuite</a> are used
- * for testing the decoder. The only modification is that related images are
- * nested in discrete subdirectories, such that grouping tests is easier and
- * that groups can be tested in isolation.
+ * The PNG image files used for testing the decoder are sourced from
+ * <a href="http://www.schaik.com/pngsuite/pngsuite.html">PngSuite</a>. The only
+ * modification is that related images are nested in discrete subdirectories,
+ * such that groups of related images/tests can be tested in isolation from
+ * other groups.
  */
 @DisplayName("PNG Decoder")
 public class PngImageDecoderTest {
@@ -174,6 +174,7 @@ public class PngImageDecoderTest {
      *
      * @return a stream of dynamic tests
      */
+    @DisplayName("Basic")
     @TestFactory
     Stream<DynamicTest> pngBasic() {
         Path dir = Paths.get(ROOT + "/basic");
@@ -186,11 +187,39 @@ public class PngImageDecoderTest {
      *
      * @return a stream of dynamic tests
      */
+    @DisplayName("Filtering")
     @TestFactory
     Stream<DynamicTest> pngFiltering() {
         Path dir = Paths.get(ROOT + "/image-filtering");
         return createTestsFromDir(dir);
     }
+
+    /**
+     * Test factory that creates a stream of tests for all PNG files in the
+     * {@code /interlacing} subdirectory.
+     *
+     * @return a stream of dynamic tests
+     */
+    @DisplayName("Interlacing")
+    @TestFactory
+    Stream<DynamicTest> pngInterlacing() {
+        Path dir = Paths.get(ROOT + "/interlacing");
+        return createTestsFromDir(dir);
+    }
+
+    /**
+     * Test factory that creates a stream of tests for all PNG files in the
+     * {@code /odd-sizes} subdirectory.
+     *
+     * @return a stream of dynamic tests
+     */
+    @DisplayName("Odd Sizes")
+    @TestFactory
+    Stream<DynamicTest> pngOddSizes() {
+        Path dir = Paths.get(ROOT + "/odd-sizes");
+        return createTestsFromDir(dir);
+    }
+
     /**
      * Utility method for test factories. Constructs a dynamic
      * {@link #decodeAndCompare(Path)} test for each PNG file in the specified
