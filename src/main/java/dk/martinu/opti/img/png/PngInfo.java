@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2024, Adam Martinu. All rights reserved. Altering or
+ * removing copyright notices or this file header is not allowed.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");  you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,  WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.*;
@@ -5,8 +21,6 @@ import dk.martinu.opti.img.spi.*;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.IntUnaryOperator;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -48,7 +62,7 @@ public class PngInfo {
     final int height;
     final int bitDepth;
     final ColorType colorType;
-//     remove unless used by decoders
+    // TODO remove unless used by decoders
     final byte compressionMethod;
     final FilterMethod filterMethod;
     final InterlaceMethod interlaceMethod;
@@ -97,7 +111,7 @@ public class PngInfo {
             throw new ImageDataException("invalid image height {%d}", height);
         }
 
-        bitDepth = getBitDepth(chunk.data()[8]);
+        bitDepth  = getBitDepth(chunk.data()[8]);
         colorType = ColorType.get(chunk.data()[9]);
         colorType.validateBitDepth(bitDepth);
 
@@ -106,7 +120,7 @@ public class PngInfo {
             throw new ImageDataException("invalid compression method {%d}", compressionMethod);
         }
 
-        filterMethod = getFilterMethod(chunk.data()[11]);
+        filterMethod    = getFilterMethod(chunk.data()[11]);
         interlaceMethod = getInterlaceMethod(chunk.data()[12]);
     }
 
@@ -267,11 +281,19 @@ public class PngInfo {
         }
 
         // TODO mask color values for bit depth
-        // FIXME incorrect len check, truecolor is 6 bytes
-        // TODO ensure index is valid if INDEXED
         // https://www.w3.org/TR/png/#11bKGD
         final int len = chunk.data().length;
-        if (len != (colorType.usesPalette() ? 1 : 2)) {
+        final int required;
+        if (colorType.usesPalette()) {
+            required = 1;
+        }
+        else if (colorType.usesAlpha()) {
+            required = 2 * (colorType.getComponentCount() - 1);
+        }
+        else {
+            required = 2 * colorType.getComponentCount();
+        }
+        if (len != required) {
             throw new ImageDataException("invalid bKGD chunk samples length {%d}", len);
         }
 
@@ -355,40 +377,6 @@ public class PngInfo {
         }
     }
 
-    private byte[] getPremultipliedPalette(byte[] bkgd) {
-        if (colorType.usesPalette() && palette != null && transparency != null) {
-            // background color constants for multiplying
-            final float r = (float) (bkgd[0] & 0xFF);
-            final float g = (float) (bkgd[1] & 0xFF);
-            final float b = (float) (bkgd[2] & 0xFF);
-            // return value with premultiplied colors
-            byte[] plte = Arrays.copyOf(palette, palette.length);
-            // iterate over all entries in tRNS (may contain fewer entries than palette entries)
-            for (int i = 0, pi = 0; i < transparency.length; i++, pi += 3) {
-                int alpha = transparency[i] & 0xFF;
-                // fully transparent
-                if (alpha == 0) {
-                    plte[pi]     = bkgd[0];
-                    plte[pi + 1] = bkgd[1];
-                    plte[pi + 2] = bkgd[2];
-                }
-                // partially transparent
-                else if (alpha != 0xFF) {
-                    // output = alpha * foreground + (1-alpha) * background
-                    float alpha_fg = alpha / 255.0F;
-                    float alpha_bg = 1.0F - alpha_fg;
-                    plte[pi]     = (byte) ((int) (alpha_fg * (plte[pi] & 0xFF)) + (int) (alpha_bg * r));
-                    plte[pi + 1] = (byte) ((int) (alpha_fg * (plte[pi + 1] & 0xFF)) + (int) (alpha_bg * g));
-                    plte[pi + 2] = (byte) ((int) (alpha_fg * (plte[pi + 2] & 0xFF)) + (int) (alpha_bg * b));
-                }
-            }
-            return plte;
-        }
-        else {
-            return palette;
-        }
-    }
-
     private FilterMethod getFilterMethod(byte value) throws ImageDataException {
         int i = value & 0xFF;
         if (i == FILTER_METHOD_0) {
@@ -432,6 +420,40 @@ public class PngInfo {
         }
         else {
             throw new ImageDataException("invalid interlace method value {%d}", i);
+        }
+    }
+
+    private byte[] getPremultipliedPalette(byte[] bkgd) {
+        if (colorType.usesPalette() && palette != null && transparency != null) {
+            // background color constants for multiplying
+            final float r = (float) (bkgd[0] & 0xFF);
+            final float g = (float) (bkgd[1] & 0xFF);
+            final float b = (float) (bkgd[2] & 0xFF);
+            // return value with premultiplied colors
+            byte[] plte = Arrays.copyOf(palette, palette.length);
+            // iterate over all entries in tRNS (may contain fewer entries than palette entries)
+            for (int i = 0, pi = 0; i < transparency.length; i++, pi += 3) {
+                int alpha = transparency[i] & 0xFF;
+                // fully transparent
+                if (alpha == 0) {
+                    plte[pi]     = bkgd[0];
+                    plte[pi + 1] = bkgd[1];
+                    plte[pi + 2] = bkgd[2];
+                }
+                // partially transparent
+                else if (alpha != 0xFF) {
+                    // output = alpha * foreground + (1-alpha) * background
+                    float alpha_fg = alpha / 255.0F;
+                    float alpha_bg = 1.0F - alpha_fg;
+                    plte[pi]     = (byte) ((int) (alpha_fg * (plte[pi] & 0xFF)) + (int) (alpha_bg * r));
+                    plte[pi + 1] = (byte) ((int) (alpha_fg * (plte[pi + 1] & 0xFF)) + (int) (alpha_bg * g));
+                    plte[pi + 2] = (byte) ((int) (alpha_fg * (plte[pi + 2] & 0xFF)) + (int) (alpha_bg * b));
+                }
+            }
+            return plte;
+        }
+        else {
+            return palette;
         }
     }
 }
