@@ -97,31 +97,33 @@ public class PngInfo {
         if (chunk.type() != IHDR) {
             throw new ImageFormatException("missing IHDR chunk");
         }
-        if (chunk.data().length != IHDR_LENGTH) {
+
+        byte[] ihdr = chunk.data();
+        if (ihdr.length != IHDR_LENGTH) {
             throw new ImageDataException("invalid IHDR chunk");
         }
 
-        width = getInt(chunk.data());
+        width = getInt(ihdr);
         if (width < 1) {
             throw new ImageDataException("invalid image width {%d}", width);
         }
 
-        height = getInt(chunk.data(), 4);
+        height = getInt(ihdr, 4);
         if (height < 1) {
             throw new ImageDataException("invalid image height {%d}", height);
         }
 
-        bitDepth  = getBitDepth(chunk.data()[8]);
-        colorType = ColorType.get(chunk.data()[9]);
+        bitDepth  = getBitDepth(ihdr[8]);
+        colorType = ColorType.get(ihdr[9]);
         colorType.validateBitDepth(bitDepth);
 
-        compressionMethod = chunk.data()[10];
+        compressionMethod = ihdr[10];
         if (compressionMethod != COMPRESSION_DEFLATE) {
             throw new ImageDataException("invalid compression method {%d}", compressionMethod);
         }
 
-        filterMethod    = getFilterMethod(chunk.data()[11]);
-        interlaceMethod = getInterlaceMethod(chunk.data()[12]);
+        filterMethod    = getFilterMethod(ihdr[11]);
+        interlaceMethod = getInterlaceMethod(ihdr[12]);
     }
 
     public OptiImage createImage() throws ImageFormatException, ImageDataException {
