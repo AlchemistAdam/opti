@@ -282,7 +282,10 @@ public class PngInfo {
 
         // TODO mask color values for bit depth
         // https://www.w3.org/TR/png/#11bKGD
-        final int len = chunk.data().length;
+        final byte[] bKGD = chunk.data();
+        final int len = bKGD.length;
+
+        // validate chunk length
         final int required;
         if (colorType.usesPalette()) {
             required = 1;
@@ -295,6 +298,14 @@ public class PngInfo {
         }
         if (len != required) {
             throw new ImageDataException("invalid bKGD chunk samples length {%d}", len);
+        }
+
+        // if palette is used, ensure background index is in bounds
+        if (colorType.usesPalette()) {
+            int index = (background[0] & 0xFF) * 3;
+            if (index >= palette.length) {
+                throw new ImageDataException("invalid bKGD palette index {%d}", index);
+            }
         }
 
         background = chunk.data();
