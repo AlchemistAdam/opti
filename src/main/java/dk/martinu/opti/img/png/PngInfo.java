@@ -19,8 +19,7 @@ package dk.martinu.opti.img.png;
 import dk.martinu.opti.img.*;
 import dk.martinu.opti.img.spi.*;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -91,6 +90,8 @@ public class PngInfo {
      * IDAT chunks have already been read.
      */
     protected boolean isIdatBufferClosed = false;
+    // TODO metadata
+    private final Map<String, Object> metadata = new HashMap<>();
 
     public PngInfo(Chunk chunk) throws ImageFormatException, ImageDataException {
         Objects.requireNonNull(chunk, "chunk is null");
@@ -148,11 +149,13 @@ public class PngInfo {
         // return value
         final OptiImage img;
         // TODO copy pngSamples into image instance
-        if (colorType.usesTruecolor() || colorType.usesPalette()) {
-            img = new RgbImage(width, height, samples);
+        if (colorType.usesTruecolor()) {
+            // TODO metadata
+            img = new RgbImage(width, height, samples, null);
         }
         else {
-            img = new GrayscaleImage(width, height, samples);
+            // TODO metadata
+            img = new GrayscaleImage(width, height, samples, null);
         }
         return img;
     }

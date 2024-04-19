@@ -20,8 +20,7 @@ import dk.martinu.opti.img.spi.ImageDecoder;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.ServiceLoader;
+import java.util.*;
 
 public abstract class OptiImage {
 
@@ -71,6 +70,7 @@ public abstract class OptiImage {
      * </pre>
      */
     public final byte[] data;
+    public final Map<String, Object> metadata;
 
     public OptiImage(int width, int height, int channels, int depth) {
         if (width < 1) {
@@ -88,10 +88,10 @@ public abstract class OptiImage {
         if (depth > 8) {
             throw new IllegalArgumentException("depth is greater than 8");
         }
-        this.width = width;
-        this.height = height;
+        this.width    = width;
+        this.height   = height;
         this.channels = channels;
-        this.depth = depth;
+        this.depth    = depth;
 
         // TODO this only works for bit depth := 8
         // required length of samples array
@@ -108,10 +108,11 @@ public abstract class OptiImage {
                 nBytes += 1;
             }
         }
-        data = new byte[nBytes];
+        data     = new byte[nBytes];
+        metadata = Map.of();
     }
 
-    protected OptiImage(int width, int height, int channels, int depth, byte[] samples) {
+    protected OptiImage(int width, int height, int channels, int depth, byte[] samples, Map<String, Object> metadata) {
         if (width < 1) {
             throw new IllegalArgumentException("width is less than 1");
         }
@@ -127,17 +128,29 @@ public abstract class OptiImage {
         if (depth > 8) {
             throw new IllegalArgumentException("depth is greater than 8");
         }
-        this.width = width;
-        this.height = height;
+        this.width    = width;
+        this.height   = height;
         this.channels = channels;
-        this.depth = depth;
+        this.depth    = depth;
         // TODO validate data length
-        this.data = samples;
+        this.data     = samples;
+        this.metadata = metadata != null ? Map.copyOf(metadata) : Map.of();
     }
 
     public abstract OptiImage allocate();
 
     public abstract OptiImage allocate(int width, int height);
+
+    public byte[] getPixel(int x, int y, byte[] pixel) {
+        for (int i = 0; i < channels; i++) {
+            pixel[i] = getSample(x, y, i);
+        }
+        return pixel;
+    }
+
+    public Object getProperty(String key) {
+        return metadata.get(key);
+    }
 
     public abstract byte getSample(int x, int y, int channel);
 
@@ -153,13 +166,6 @@ public abstract class OptiImage {
             dest[i] = getSample(x++, y, channel);
         }
         return dest;
-    }
-
-    public byte[] getPixel(int x, int y, byte[] pixel) {
-        for (int i = 0; i < channels; i++) {
-            pixel[i] = getSample(x, y, i);
-        }
-        return pixel;
     }
 
     public abstract void setSample(int x, int y, int channel, byte s);
