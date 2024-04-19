@@ -24,6 +24,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import static dk.martinu.opti.Util.getInt;
+import static dk.martinu.opti.img.OptiImage.*;
 import static dk.martinu.opti.img.png.ChunkType.*;
 
 public class PngInfo {
@@ -306,7 +307,7 @@ public class PngInfo {
 
         // if palette is used, ensure background index is in bounds
         if (colorType.usesPalette()) {
-            int index = (background[0] & 0xFF) * 3;
+            int index = (bKGD[0] & 0xFF) * 3;
             if (index >= palette.length) {
                 throw new ImageDataException("invalid bKGD palette index {%d}", index);
             }
@@ -327,7 +328,8 @@ public class PngInfo {
             }
         }
 
-        background = chunk.data();
+        background = bKGD;
+        metadata.put(BACKGROUND, List.of(background));
     }
 
     protected void update_tRNS(Chunk chunk) throws ImageFormatException, ImageDataException {
