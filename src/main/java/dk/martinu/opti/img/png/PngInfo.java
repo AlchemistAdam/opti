@@ -280,7 +280,6 @@ public class PngInfo {
             throw new ImageFormatException("bKGD chunk must precede IDAT chunks");
         }
 
-        // TODO mask color values for bit depth
         // https://www.w3.org/TR/png/#11bKGD
         final byte[] bKGD = chunk.data();
         final int len = bKGD.length;
@@ -305,6 +304,21 @@ public class PngInfo {
             int index = (background[0] & 0xFF) * 3;
             if (index >= palette.length) {
                 throw new ImageDataException("invalid bKGD palette index {%d}", index);
+            }
+        }
+
+        // mask color values for bit depths < 16
+        else if (bitDepth < 16) {
+            int mask = switch (bitDepth) {
+                case 8 -> 0xFF;
+                case 4 -> 0x0F;
+                case 2 -> 0x03;
+                case 1 -> 0x01;
+                default -> throw new RuntimeException();
+            };
+            for (int i = 0; i < len; i += 2) {
+                bKGD[i]     = 0;
+                bKGD[i + 1] = (byte) (bKGD[i + 1] & mask);
             }
         }
 
