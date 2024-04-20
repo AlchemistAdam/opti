@@ -16,6 +16,7 @@
  */
 package dk.martinu.opti.img.png;
 
+import dk.martinu.opti.ByteView;
 import dk.martinu.opti.img.*;
 import dk.martinu.opti.img.spi.*;
 
@@ -126,6 +127,9 @@ public class PngInfo {
 
         filterMethod    = getFilterMethod(ihdr[11]);
         interlaceMethod = getInterlaceMethod(ihdr[12]);
+
+        metadata.put(IMAGE_FORMAT, "PNG");
+        metadata.put(BIT_DEPTH, bitDepth);
     }
 
     public OptiImage createImage() throws ImageFormatException, ImageDataException {
@@ -151,12 +155,10 @@ public class PngInfo {
         final OptiImage img;
         // TODO copy pngSamples into image instance
         if (colorType.usesTruecolor()) {
-            // TODO metadata
-            img = new RgbImage(width, height, samples, null);
+            img = new RgbImage(width, height, samples, metadata);
         }
         else {
-            // TODO metadata
-            img = new GrayscaleImage(width, height, samples, null);
+            img = new GrayscaleImage(width, height, samples, metadata);
         }
         return img;
     }
@@ -305,31 +307,37 @@ public class PngInfo {
             throw new ImageDataException("invalid bKGD chunk samples length {%d}", len);
         }
 
-        // if palette is used, ensure background index is in bounds
         if (colorType.usesPalette()) {
+            // ensure background index is in bounds
             int index = (bKGD[0] & 0xFF) * 3;
             if (index >= palette.length) {
                 throw new ImageDataException("invalid bKGD palette index {%d}", index);
             }
+            // store background in metadata
+            metadata.put(COMPOSITING_BACKGROUND, new ByteView(Arrays.copyOfRange(palette, index, index + 3)));
         }
 
-        // mask color values for bit depths < 16
-        else if (bitDepth < 16) {
-            int mask = switch (bitDepth) {
-                case 8 -> 0xFF;
-                case 4 -> 0x0F;
-                case 2 -> 0x03;
-                case 1 -> 0x01;
-                default -> throw new RuntimeException();
-            };
-            for (int i = 0; i < len; i += 2) {
-                bKGD[i]     = 0;
-                bKGD[i + 1] = (byte) (bKGD[i + 1] & mask);
+        else {
+            // mask color values for bit depths < 16
+            if (bitDepth < BIT_DEPTH_16) {
+                int mask = switch (bitDepth) {
+                    case BIT_DEPTH_8 -> 0xFF;
+                    case BIT_DEPTH_4 -> 0x0F;
+                    case BIT_DEPTH_2 -> 0x03;
+                    case BIT_DEPTH_1 -> 0x01;
+                    // invalid bit depth
+                    default -> throw new RuntimeException();
+                };
+                for (int i = 0; i < len; i += 2) {
+                    bKGD[i]     = 0;
+                    bKGD[i + 1] = (byte) (bKGD[i + 1] & mask);
+                }
             }
+            // store background in metadata
+            metadata.put(COMPOSITING_BACKGROUND, new ByteView(bKGD));
         }
 
         background = bKGD;
-        metadata.put(BACKGROUND, List.of(background));
     }
 
     protected void update_tRNS(Chunk chunk) throws ImageFormatException, ImageDataException {
@@ -377,7 +385,7 @@ public class PngInfo {
     }
 
     private byte[] getCompositingBackground() {
-        // create new background color for color type
+        // create new default (white) background color for color type
         if (background == null) {
             // INDEXED
             if (colorType.usesPalette()) {
