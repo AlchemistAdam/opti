@@ -24,7 +24,9 @@ import java.util.*;
 
 public abstract class OptiImage {
 
-    public static final String BACKGROUND = "background";
+    public static final String IMAGE_FORMAT = "imageFormat";
+    public static final String BIT_DEPTH = "bitDepth";
+    public static final String COMPOSITING_BACKGROUND = "compositingBackground";
     private static final ServiceLoader<ImageDecoder> readers = ServiceLoader.load(ImageDecoder.class);
 
     public static OptiImage from(Path path) throws IOException {
