@@ -16,8 +16,10 @@
  */
 package test;
 
+import dk.martinu.opti.ByteView;
 import dk.martinu.opti.img.OptiImage;
 import dk.martinu.opti.img.png.PngImageDecoder;
+import dk.martinu.opti.img.png.PngInfo;
 import org.junit.jupiter.api.*;
 
 import javax.imageio.ImageIO;
@@ -26,6 +28,7 @@ import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Map;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Stream;
 
@@ -83,11 +86,12 @@ public class PngImageDecoderTest {
      * channel, converting the samples to bit-depth 8 if necessary. This method
      * accounts for indexed color samples and alpha.
      *
-     * @param img     the image
-     * @param channel the channel (band) to get samples from
-     * @param samples the array to store sample values in
+     * @param img      the image
+     * @param channel  the channel (band) to get samples from
+     * @param samples  the array to store sample values in
+     * @param metadata map of metadata from the Opti image decoder
      */
-    private static void getIIOSamples(BufferedImage img, int channel, byte[] samples) {
+    private static void getIIOSamples(BufferedImage img, int channel, byte[] samples, Map<String, Object> metadata) {
         int width = img.getWidth();
         int height = img.getHeight();
         int[] samplesIIO = new int[samples.length];
@@ -111,22 +115,28 @@ public class PngImageDecoderTest {
                     samples[i] = (byte) (sampleOp.applyAsInt(samplesIIO[i]) >>> shift);
                 }
             }
-            // alpha is present - sample values need to be composited to match
-            // Opti representation
+            // composite sample values with alpha
             else {
+                // background compositing sample
+                ByteView bv = (ByteView) metadata.get(OptiImage.COMPOSITING_BACKGROUND);
+                final int bkgd = bv != null ? bv.get(channel) & 0xFF : 0xFF;
+
                 // number of bits to shift alpha values
                 int alphaShift = Math.max(0, icm.getComponentSize(3) - 8);
                 for (int i = 0; i < samplesIIO.length; i++) {
                     int alpha = icm.getAlpha(samplesIIO[i]) >>> alphaShift;
+                    // fully opaque
                     if (alpha == 255) {
-                        samples[i] = (byte) sampleOp.applyAsInt(samplesIIO[i] >>> shift);
+                        samples[i] = (byte) (sampleOp.applyAsInt(samplesIIO[i]) >>> shift);
                     }
+                    // fully transparent
                     else if (alpha == 0) {
-                        samples[i] = (byte) 0xFF;
+                        samples[i] = (byte) bkgd;
                     }
+                    // composite
                     else {
                         float a = alpha / 255.0F;
-                        samples[i] = (byte) (a * sampleOp.applyAsInt(samplesIIO[i] >>> shift) + (1 - a) * 0xFF);
+                        samples[i] = (byte) (a * (sampleOp.applyAsInt(samplesIIO[i]) >>> shift) + (1 - a) * bkgd);
                     }
                 }
             }
@@ -143,29 +153,55 @@ public class PngImageDecoderTest {
                     samples[i] = (byte) (samplesIIO[i] >>> shift);
                 }
             }
-            // alpha is present - sample values need to be composited to match
-            // Opti representation
+            // composite sample values with alpha
             else {
+
+                // background compositing sample
+                Integer bitDepth = (Integer) metadata.get(OptiImage.BIT_DEPTH);
+                ByteView bv = (ByteView) metadata.get(OptiImage.COMPOSITING_BACKGROUND);
+                final int bkgd;
+                if (bitDepth != null && bv != null) {
+                    int index = bitDepth > PngInfo.BIT_DEPTH_8 ? channel * 2 : channel * 2 + 1;
+                    bkgd = bv.get(index) & 0xFF;
+                }
+                else {
+                    bkgd = 0xFF;
+                }
+
                 int alphaChannel = raster.getSampleModel().getNumBands() > 3 ? 3 : 1;
                 // number of bits to shift alpha values
                 int alphaShift = Math.max(0, raster.getSampleModel().getSampleSize(alphaChannel) - 8);
                 int[] alphaIIO = new int[samplesIIO.length];
                 raster.getSamples(0, 0, width, height, alphaChannel, alphaIIO);
+
                 for (int i = 0; i < samplesIIO.length; i++) {
                     int alpha = alphaIIO[i] >>> alphaShift;
                     if (alpha == 255) {
                         samples[i] = (byte) (samplesIIO[i] >>> shift);
                     }
                     else if (alpha == 0) {
-                        samples[i] = (byte) 0xFF;
+                        samples[i] = (byte) bkgd;
                     }
                     else {
                         float a = alpha / 255.0F;
-                        samples[i] = (byte) (a * (samplesIIO[i] >>> shift) + (1 - a) * 0xFF);
+                        samples[i] = (byte) (a * (samplesIIO[i] >>> shift) + (1 - a) * bkgd);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Test factory that creates a stream of tests for all PNG files in the
+     * {@code /background-colors} subdirectory.
+     *
+     * @return a stream of dynamic tests
+     */
+    @DisplayName("Background Colors")
+    @TestFactory
+    Stream<DynamicTest> pngBackgroundColors() {
+        Path dir = Paths.get(ROOT + "/background-colors");
+        return createTestsFromDir(dir);
     }
 
     /**
@@ -220,6 +256,18 @@ public class PngImageDecoderTest {
         return createTestsFromDir(dir);
     }
 
+    /**
+     * Test factory that creates a stream of tests for all PNG files in the
+     * {@code /transparency} subdirectory.
+     *
+     * @return a stream of dynamic tests
+     */
+    @DisplayName("Transparency")
+    @TestFactory
+    Stream<DynamicTest> pngTransparency() {
+        Path dir = Paths.get(ROOT + "/transparency");
+        return createTestsFromDir(dir);
+    }
     /**
      * Utility method for test factories. Constructs a dynamic
      * {@link #decodeAndCompare(Path)} test for each PNG file in the specified
@@ -276,7 +324,7 @@ public class PngImageDecoderTest {
 
         for (int i = 0; i < img.channels; i++) {
             img.getSamples(0, 0, i, samplesOpti);
-            getIIOSamples(bImg, i, samplesIIO);
+            getIIOSamples(bImg, i, samplesIIO, img.metadata);
             for (int k = 0; k < samplesOpti.length; k++) {
                 final int channel = i;
                 final int pixel = k;
