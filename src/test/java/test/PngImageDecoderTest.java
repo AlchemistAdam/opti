@@ -33,6 +33,7 @@ import java.util.function.IntUnaryOperator;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * Test class for decoding PNG images with the Opti PNG decoder. Images are
@@ -268,6 +269,7 @@ public class PngImageDecoderTest {
         Path dir = Paths.get(ROOT + "/transparency");
         return createTestsFromDir(dir);
     }
+
     /**
      * Utility method for test factories. Constructs a dynamic
      * {@link #decodeAndCompare(Path)} test for each PNG file in the specified
@@ -307,6 +309,11 @@ public class PngImageDecoderTest {
      * @param filePath file path to a PNG image file
      */
     private void decodeAndCompare(Path filePath) {
+        // TRANSPARENCY
+        // IIO ignores tRNS chunk for this specific image and defaults to a
+        // white background, causing the test to fail
+        assumeFalse(filePath.endsWith("tbbn0g04.png"));
+
         OptiImage img = decodeWithOpti(filePath);
         BufferedImage bImg = decodeWithIIO(filePath.toFile());
 
