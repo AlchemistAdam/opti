@@ -35,7 +35,7 @@ final class Adam7 implements InterlaceMethod {
         // pixel setters for reduced image samples
         PixelSetter[] setters = new PixelSetter[images.length];
         for (int i = 0; i < images.length; i++) {
-            if (images[i] != null && images[i].samples().length > 0) {
+            if (images[i] != null && images[i].samples.length > 0) {
                 setters[i] = colorType.getPixelSetter(bitDepth, images[i], palette, transparency, background);
             }
             else {
@@ -96,7 +96,7 @@ final class Adam7 implements InterlaceMethod {
 
         // lambda expression that returns the number of bytes in a scanline of 
         // an image given the image width
-        IntUnaryOperator bytes = (w) -> (int) Math.ceil(w * colorType.getComponentCount() * bitDepth / 8.0);
+        IntUnaryOperator bytes = (w) -> (int) Math.ceil(w * colorType.getComponentCount() * bitDepth / 8.0d);
         // return value
         ReducedImage[] images = new ReducedImage[7];
         // offset into filterData
@@ -108,7 +108,7 @@ final class Adam7 implements InterlaceMethod {
             int w = (int) Math.ceil(width / 8.0d);
             int lines = (int) Math.ceil(height / 8.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[0] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[0] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             offset += lines * (nBytes + 1);
         }
 
@@ -117,7 +117,7 @@ final class Adam7 implements InterlaceMethod {
             int w = (int) Math.ceil((width - 4) / 8.0d);
             int lines = (int) Math.ceil(height / 8.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[1] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[1] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             offset += lines * (nBytes + 1);
         }
         else {
@@ -129,7 +129,7 @@ final class Adam7 implements InterlaceMethod {
             int w = (int) Math.ceil(width / 4.0d);
             int lines = (int) Math.ceil((height - 4) / 8.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[2] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[2] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             offset += lines * (nBytes + 1);
         }
         else {
@@ -141,7 +141,7 @@ final class Adam7 implements InterlaceMethod {
             int w = (int) Math.ceil((width - 2) / 4.0d);
             int lines = (int) Math.ceil(height / 4.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[3] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[3] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             offset += lines * (nBytes + 1);
         }
         else {
@@ -153,7 +153,7 @@ final class Adam7 implements InterlaceMethod {
             int w = (int) Math.ceil(width / 2.0d);
             int lines = (int) Math.ceil((height - 2) / 4.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[4] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[4] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             offset += lines * (nBytes + 1);
         }
         else {
@@ -165,7 +165,7 @@ final class Adam7 implements InterlaceMethod {
             int w = (int) Math.ceil((width - 1) / 2.0d);
             int lines = (int) Math.ceil(height / 2.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[5] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[5] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             offset += lines * (nBytes + 1);
         }
         else {
@@ -177,7 +177,7 @@ final class Adam7 implements InterlaceMethod {
             int w = width;
             int lines = (int) Math.ceil((height - 1) / 2.0d);
             int nBytes = bytes.applyAsInt(w);
-            images[6] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth,colorType , filterData, offset, lines, nBytes));
+            images[6] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
             // offset += lines * (nBytes + 1);
         }
         else {

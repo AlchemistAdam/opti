@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2024, Adam Martinu. All rights reserved. Altering or
+ * removing copyright notices or this file header is not allowed.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");  you may not
+ * use this file except in compliance with the License. You may obtain a copy
+ * of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,  WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
 package dk.martinu.opti.img.png;
 
 import static dk.martinu.opti.img.png.PngInfo.*;
@@ -22,20 +38,20 @@ public final class Grayscale implements ColorType {
             return switch (bitDepth) {
                 case BIT_DEPTH_16 -> new PixelSetter_16_Alpha(image, transparency, background);
                 case BIT_DEPTH_8 -> new PixelSetter_8_Alpha(image, transparency, background);
-                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_4_Alpha(image, transparency, background));
-                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_2_Alpha(image, transparency, background));
+                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_4_Alpha(image, transparency, background));
+                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_2_Alpha(image, transparency, background));
                 // BIT_DEPTH_1
-                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_1_Alpha(image, transparency, background));
+                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_1_Alpha(image, transparency, background));
             };
         }
         else {
             return switch (bitDepth) {
                 case BIT_DEPTH_16 -> new PixelSetter_16(image);
                 case BIT_DEPTH_8 -> new PixelSetter_8(image);
-                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_4(image));
-                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_2(image));
+                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_4(image));
+                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_2(image));
                 // BIT_DEPTH_1
-                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width(), new PixelSetter_1(image));
+                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_1(image));
             };
         }
     }
