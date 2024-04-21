@@ -29,34 +29,34 @@ import dk.martinu.opti.img.spi.ImageDataException;
 interface FilterMethod {
 
     /**
-     * Reconstructs the filtered image sample bytes in {@code data} using the
+     * Reconstructs the filtered image sample bytes in {@code filt} using the
      * specified parameters, starting at index {@code 0}.
      *
      * @param bitDepth  the image bit depth
      * @param colorType the image color type
-     * @param data      the filtered sample bytes
+     * @param filt      the filtered sample bytes
      * @param lines     the number of scanlines to reconstruct
      * @param nBytes    the number of sample bytes in a scanline
      * @return an array of reconstructed sample bytes (scanlines)
      * @throws ImageDataException if the sample bytes could not be reconstructed
      */
-    default byte[] reconstruct(int bitDepth, ColorType colorType, byte[] data, int lines, int nBytes) throws ImageDataException {
-        return reconstruct(bitDepth, colorType, data, 0, lines, nBytes);
+    default byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int lines, int nBytes) throws ImageDataException {
+        return reconstruct(bitDepth, colorType, filt, 0, lines, nBytes);
     }
 
     /**
-     * Reconstructs the filtered image sample bytes in {@code data} using the
+     * Reconstructs the filtered image sample bytes in {@code filt} using the
      * specified parameters, and starting at the specified {@code offset} index.
      *
      * @param bitDepth  the image bit depth
      * @param colorType the image color type
-     * @param data      the filtered sample bytes
-     * @param offset    index offset in the {@code data} array to start
+     * @param filt      the filtered sample bytes
+     * @param offset    index offset in the {@code filt} array to start
      *                  reconstruction
      * @param lines     the number of scanlines to reconstruct
      * @param nBytes    the number of sample bytes in a scanline
      * @return an array of reconstructed sample bytes (scanlines)
      * @throws ImageDataException if the sample bytes could not be reconstructed
      */
-    byte[] reconstruct(int bitDepth, ColorType colorType, byte[] data, int offset, int lines, int nBytes) throws ImageDataException;
+    byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int offset, int lines, int nBytes) throws ImageDataException;
 }

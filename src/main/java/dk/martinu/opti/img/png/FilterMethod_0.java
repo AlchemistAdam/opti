@@ -18,29 +18,37 @@ package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
+/**
+ * Implementation of a filter method that can reconstruct sample bytes filtered
+ * with filter method 0 as described in the PNG Specification
+ * <a href="https://www.w3.org/TR/png/#9Filters">9. Filtering</a>.
+ *
+ * @author Adam Martinu
+ * @since 1.0
+ */
 final class FilterMethod_0 implements FilterMethod {
 
+    /**
+     * Constant for Filter type 0 (None).
+     */
     private static final int TYPE_NONE = 0;
+    /**
+     * Constant for Filter type 1 (Sub).
+     */
     private static final int TYPE_SUB = 1;
+    /**
+     * Constant for Filter type 2 (Up).
+     */
     private static final int TYPE_UP = 2;
+    /**
+     * Constant for Filter type 3 (Average).
+     */
     private static final int TYPE_AVERAGE = 3;
+    /**
+     * Constant for Filter type 4 (Paeth).
+     */
     private static final int TYPE_PAETH = 4;
 
-    /**
-     * DOC reconstruct
-     *
-     * @param bitDepth  the image bit depth
-     * @param colorType the image color type
-     * @param filt      the filtered bytes source
-     * @param offset    index offset in the filt array
-     * @param lines     the number of scanlines to reconstruct
-     * @param nBytes    the number of bytes in a scanline (excluding the filter
-     *                  type byte)
-     * @return an array of reconstructed scanlines
-     * @throws ImageDataException if {@code filt} contains an invalid filter
-     *                            type byte
-     */
-    // TODO remove debug print calls
     @Override
     public byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int offset, int lines, int nBytes) throws ImageDataException {
         // destination for reconstructed bytes
@@ -58,7 +66,7 @@ final class FilterMethod_0 implements FilterMethod {
                 filterOffset += sampleSize;
             }
         }
-        System.out.println("sample offset: " + filterOffset);
+
         /*
         reconstruct filtered bytes
         https://www.w3.org/TR/png/#9Filter-types
@@ -75,12 +83,10 @@ final class FilterMethod_0 implements FilterMethod {
             int filterType = filt[filterTypeIndex] & 0xFF;
 
             if (filterType == TYPE_NONE) {
-                System.out.println("filter type NONE");
                 System.arraycopy(filt, j, recon, k, nBytes);
             }
 
             else if (filterType == TYPE_SUB) {
-                System.out.println("filter type SUB");
                 for (int max = j + nBytes; j < max; j++, k++) {
                     if (j - filterOffset <= filterTypeIndex) {
                         recon[k] = filt[j];
@@ -92,7 +98,6 @@ final class FilterMethod_0 implements FilterMethod {
             }
 
             else if (filterType == TYPE_UP) {
-                System.out.println("filter type UP");
                 if (i == 0) {
                     System.arraycopy(filt, j, recon, k, nBytes);
                 }
@@ -104,7 +109,6 @@ final class FilterMethod_0 implements FilterMethod {
             }
 
             else if (filterType == TYPE_AVERAGE) {
-                System.out.println("filter type AVERAGE");
                 if (i == 0) {
                     for (int max = j + nBytes; j < max; j++, k++) {
                         if (j - filterOffset <= filterTypeIndex) {
@@ -130,7 +134,6 @@ final class FilterMethod_0 implements FilterMethod {
 
             // https://www.w3.org/TR/png/#9Filter-type-4-Paeth
             else if (filterType == TYPE_PAETH) {
-                System.out.println("filter type PAETH");
                 if (i == 0) {
                     for (int max = j + nBytes; j < max; j++, k++) {
                         if (j - filterOffset <= filterTypeIndex) {
