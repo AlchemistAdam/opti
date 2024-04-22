@@ -18,6 +18,8 @@ package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
+import java.util.Objects;
+
 import static dk.martinu.opti.img.png.PngInfo.*;
 import static dk.martinu.opti.img.png.InconstantPixelSetter.wrapIfInconstant;
 
@@ -36,16 +38,15 @@ final class Indexed implements ColorType {
     }
 
     @Override
-    public PixelSetter getPixelSetter(int bitDepth, ReducedImage image, byte[] palette,
-            byte[] transparency, byte[] background) throws ImageDataException {
+    public PixelSetter getPixelSetter(int bitDepth, ReducedImage image, byte[] plte, byte[] trns, byte[] bkgd) throws ImageDataException {
         validateBitDepth(bitDepth);
-        // NOTE: palette is premultiplied with alpha by PngInfo
+        Objects.requireNonNull(plte, "palette is null");
         return switch (bitDepth) {
-            case BIT_DEPTH_8 -> new PixelSetter_8(image, palette);
-            case BIT_DEPTH_4 -> wrapIfInconstant(bitDepth, image.width, new PixelSetter_4(image, palette));
-            case BIT_DEPTH_2 -> wrapIfInconstant(bitDepth, image.width, new PixelSetter_2(image, palette));
+            case BIT_DEPTH_8 -> new PixelSetter_8(image, plte);
+            case BIT_DEPTH_4 -> wrapIfInconstant(bitDepth, image.width, new PixelSetter_4(image, plte));
+            case BIT_DEPTH_2 -> wrapIfInconstant(bitDepth, image.width, new PixelSetter_2(image, plte));
             // BIT_DEPTH_1
-            default -> wrapIfInconstant(bitDepth, image.width, new PixelSetter_1(image, palette));
+            default -> wrapIfInconstant(bitDepth, image.width, new PixelSetter_1(image, plte));
         };
     }
 

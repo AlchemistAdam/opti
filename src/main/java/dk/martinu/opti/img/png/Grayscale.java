@@ -35,15 +35,16 @@ final class Grayscale implements ColorType {
     }
 
     @Override
-    public PixelSetter getPixelSetter(int bitDepth, ReducedImage image, byte[] palette, byte[] transparency, byte[] background) {
-        if (transparency != null && background != null) {
+    public PixelSetter getPixelSetter(int bitDepth, ReducedImage image, byte[] plte, byte[] trns, byte[] bkgd) throws ImageDataException {
+        validateBitDepth(bitDepth);
+        if (trns != null && bkgd != null) {
             return switch (bitDepth) {
-                case BIT_DEPTH_16 -> new PixelSetter_16_Alpha(image, transparency, background);
-                case BIT_DEPTH_8 -> new PixelSetter_8_Alpha(image, transparency, background);
-                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_4_Alpha(image, transparency, background));
-                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_2_Alpha(image, transparency, background));
+                case BIT_DEPTH_16 -> new PixelSetter_16_Alpha(image, trns, bkgd);
+                case BIT_DEPTH_8 -> new PixelSetter_8_Alpha(image, trns, bkgd);
+                case BIT_DEPTH_4 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_4_Alpha(image, trns, bkgd));
+                case BIT_DEPTH_2 -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_2_Alpha(image, trns, bkgd));
                 // BIT_DEPTH_1
-                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_1_Alpha(image, transparency, background));
+                default -> InconstantPixelSetter.wrapIfInconstant(bitDepth, image.width, new PixelSetter_1_Alpha(image, trns, bkgd));
             };
         }
         else {

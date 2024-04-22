@@ -23,9 +23,9 @@ import java.util.Objects;
 import static dk.martinu.opti.img.png.PngInfo.BIT_DEPTH_16;
 import static dk.martinu.opti.img.png.PngInfo.BIT_DEPTH_8;
 
-public final class GrayscaleAlpha implements ColorType {
+final class GrayscaleAlpha implements ColorType {
 
-    public static final int COMPONENT_COUNT = 2;
+    static final int COMPONENT_COUNT = 2;
 
     @Override
     public int getComponentCount() {
@@ -38,14 +38,14 @@ public final class GrayscaleAlpha implements ColorType {
     }
 
     @Override
-    public PixelSetter getPixelSetter(int bitDepth, ReducedImage image, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
+    public PixelSetter getPixelSetter(int bitDepth, ReducedImage image, byte[] plte, byte[] trns, byte[] bkgd) throws ImageDataException {
         validateBitDepth(bitDepth);
-        Objects.requireNonNull(background, "background is null");
+        Objects.requireNonNull(bkgd, "background is null");
         if (bitDepth == BIT_DEPTH_8) {
-            return new PixelSetter_8(image, background);
+            return new PixelSetter_8(image, bkgd);
         }
         else /* if (bitDepth == BIT_DEPTH_16) */ {
-            return new PixelSetter_16(image, background);
+            return new PixelSetter_16(image, bkgd);
         }
     }
 
