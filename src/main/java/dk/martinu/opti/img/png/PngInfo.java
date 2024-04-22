@@ -148,7 +148,7 @@ public class PngInfo {
         byte[] bkgd = getCompositingBackground();
         byte[] plte = getPremultipliedPalette(bkgd);
         // image samples used by return value
-        byte[] samples = interlaceMethod.getPngSamples(width, height, bitDepth, colorType,
+        byte[] samples = interlaceMethod.getCombinedSamples(width, height, bitDepth, colorType,
                 filterMethod, getFilteredData(), plte, transparency, bkgd);
 
         // return value

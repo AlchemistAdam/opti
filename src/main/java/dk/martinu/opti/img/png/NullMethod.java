@@ -42,7 +42,7 @@ final class NullMethod implements InterlaceMethod {
     private NullMethod() { }
 
     @Override
-    public byte[] getPngSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
+    public byte[] getCombinedSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
             byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
 
         // number of bytes in a scanline

@@ -59,6 +59,6 @@ interface InterlaceMethod {
      * @throws ImageDataException if an error occurred when combining the
      *                            reduced images
      */
-    byte[] getPngSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
+    byte[] getCombinedSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
             byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException;
 }

@@ -44,7 +44,7 @@ final class Adam7 implements InterlaceMethod {
     private Adam7() { }
 
     @Override
-    public byte[] getPngSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
+    public byte[] getCombinedSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
             byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
         // reduced images containing the samples
         ReducedImage[] images = getReducedImages(width, height, bitDepth, colorType, filterMethod, filt);
