@@ -20,7 +20,10 @@ import dk.martinu.opti.img.spi.ImageDataException;
 
 /**
  * Interface to represent a filter method. This interface only declares methods
- * for reversing (reconstructing) the filter transformation.
+ * for reversing (reconstructing) the filter transform.
+ * <p>
+ * See <a href="https://www.w3.org/TR/png/#9Filters">9. Filtering</a> for
+ * details on filter methods.
  *
  * @author Adam Martinu
  * @see FilterMethod_0
@@ -38,7 +41,8 @@ interface FilterMethod {
      * @param lines     the number of scanlines to reconstruct
      * @param nBytes    the number of sample bytes in a scanline
      * @return an array of reconstructed sample bytes (scanlines)
-     * @throws ImageDataException if the sample bytes could not be reconstructed
+     * @throws ImageDataException if an error occurred when reconstructing the
+     *                            sample bytes
      */
     default byte[] reconstruct(int bitDepth, ColorType colorType, byte[] filt, int lines, int nBytes) throws ImageDataException {
         return reconstruct(bitDepth, colorType, filt, 0, lines, nBytes);

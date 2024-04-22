@@ -20,8 +20,8 @@ import dk.martinu.opti.img.spi.ImageDataException;
 
 /**
  * Implementation of a filter method that can reconstruct sample bytes filtered
- * with filter method 0 as described in the PNG Specification
- * <a href="https://www.w3.org/TR/png/#9Filters">9. Filtering</a>.
+ * with filter method 0 as described in the PNG Specification, section
+ * <a href="https://www.w3.org/TR/png/#9Filter-types">9.2</a>.
  *
  * @author Adam Martinu
  * @since 1.0
