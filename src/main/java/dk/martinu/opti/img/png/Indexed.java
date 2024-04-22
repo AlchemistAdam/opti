@@ -21,9 +21,9 @@ import dk.martinu.opti.img.spi.ImageDataException;
 import static dk.martinu.opti.img.png.PngInfo.*;
 import static dk.martinu.opti.img.png.InconstantPixelSetter.wrapIfInconstant;
 
-public final class Indexed implements ColorType {
+final class Indexed implements ColorType {
 
-    public static final int COMPONENT_COUNT = 1;
+    static final int COMPONENT_COUNT = 1;
 
     @Override
     public int getComponentCount() {
@@ -56,7 +56,8 @@ public final class Indexed implements ColorType {
 
     @Override
     public void validateBitDepth(int bitDepth) throws ImageDataException {
-        if (bitDepth == BIT_DEPTH_16) {
+        if (bitDepth != BIT_DEPTH_1 && bitDepth != BIT_DEPTH_2
+                && bitDepth != BIT_DEPTH_4 && bitDepth != BIT_DEPTH_8) {
             throw new ImageDataException("invalid bit depth for color type %s {%d}", getName(), bitDepth);
         }
     }

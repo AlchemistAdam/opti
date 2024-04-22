@@ -16,11 +16,13 @@
  */
 package dk.martinu.opti.img.png;
 
+import dk.martinu.opti.img.spi.ImageDataException;
+
 import static dk.martinu.opti.img.png.PngInfo.*;
 
-public final class Grayscale implements ColorType {
+final class Grayscale implements ColorType {
 
-    public static final int COMPONENT_COUNT = 1;
+    private static final int COMPONENT_COUNT = 1;
 
     @Override
     public int getComponentCount() {
@@ -61,9 +63,17 @@ public final class Grayscale implements ColorType {
         return 0;
     }
 
+    @Override
+    public void validateBitDepth(int bitDepth) throws ImageDataException {
+        if (bitDepth != BIT_DEPTH_1 && bitDepth != BIT_DEPTH_2 && bitDepth != BIT_DEPTH_4
+                && bitDepth != BIT_DEPTH_8 && bitDepth != BIT_DEPTH_16) {
+            throw new ImageDataException("invalid bit depth for color type %s {%d}", getName(), bitDepth);
+        }
+    }
+
     private static final class PixelSetter_1 extends PackedPixelSetter {
 
-        public PixelSetter_1(ReducedImage image) {
+        PixelSetter_1(ReducedImage image) {
             super(image);
         }
 
@@ -108,7 +118,7 @@ public final class Grayscale implements ColorType {
             // since there are only 2 possible values, the sample value is
             // assigned directly instead of replicating bits
             byte s = b == 0 ? 0 : (byte) 0xFF;
-            dest[index]     = s;
+            dest[index] = s;
         }
     }
 
@@ -121,7 +131,7 @@ public final class Grayscale implements ColorType {
         @Override
         public void setNext(byte[] dest, int index) {
             byte s = samples[i];
-            dest[index]     = s;
+            dest[index] = s;
             i += COMPONENT_COUNT * 2;
         }
     }
@@ -148,7 +158,7 @@ public final class Grayscale implements ColorType {
             else {
                 s = bkgd[0];
             }
-            dest[index]     = s;
+            dest[index] = s;
             i += COMPONENT_COUNT * 2;
         }
     }
@@ -209,13 +219,13 @@ public final class Grayscale implements ColorType {
             // since there are only 2 possible values, the sample value is
             // assigned directly instead of replicating bits
             byte s = b == 0 ? 0 : (byte) 0xFF;
-            dest[index]     = s;
+            dest[index] = s;
         }
     }
 
     private static final class PixelSetter_2 extends PackedPixelSetter {
 
-        public PixelSetter_2(ReducedImage image) {
+        PixelSetter_2(ReducedImage image) {
             super(image);
         }
 
@@ -249,7 +259,7 @@ public final class Grayscale implements ColorType {
                 case 2 -> (byte) 0xAA;
                 default -> (byte) 0xFF; // case 3
             };
-            dest[index]     = s;
+            dest[index] = s;
         }
     }
 
@@ -298,7 +308,7 @@ public final class Grayscale implements ColorType {
                 case 2 -> (byte) 0xAA;
                 default -> (byte) 0xFF; // case 3
             };
-            dest[index]     = s;
+            dest[index] = s;
         }
     }
 
@@ -323,7 +333,7 @@ public final class Grayscale implements ColorType {
                 position = 0;
                 i += COMPONENT_COUNT;
             }
-            dest[index]     = s;
+            dest[index] = s;
         }
     }
 
@@ -359,7 +369,7 @@ public final class Grayscale implements ColorType {
                 int b = bkgd[1] & 0x0F;
                 s = (byte) (b << 4 | b);
             }
-            dest[index]     = s;
+            dest[index] = s;
         }
     }
 
@@ -372,7 +382,7 @@ public final class Grayscale implements ColorType {
         @Override
         public void setNext(byte[] dest, int index) {
             byte s = samples[i];
-            dest[index]     = s;
+            dest[index] = s;
             i += COMPONENT_COUNT;
         }
     }
@@ -395,7 +405,7 @@ public final class Grayscale implements ColorType {
             if (s == trns[1]) {
                 s = bkgd[1];
             }
-            dest[index]     = s;
+            dest[index] = s;
             i += COMPONENT_COUNT;
         }
     }
