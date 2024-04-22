@@ -46,7 +46,7 @@ final class Truecolor implements ColorType {
                 return new PixelSetter_16_Alpha(image, trns, bkgd);
             }
         }
-        else if  (bitDepth == BIT_DEPTH_8) {
+        else if (bitDepth == BIT_DEPTH_8) {
             return new PixelSetter_8(image);
         }
         else /* if (bitDepth == BIT_DEPTH_16) */ {
