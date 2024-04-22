@@ -20,18 +20,34 @@ import dk.martinu.opti.img.spi.ImageDataException;
 
 import java.util.function.IntUnaryOperator;
 
-// DOC Adam7
+/**
+ * Implementation of an interlace method that can combine reduced images, based
+ * on interlace method 1 in the PNG Specification, section
+ * <a href="https://www.w3.org/TR/png/#8InterlaceMethods">8.1</a>.
+ *
+ * <b>NOTE:</b> this implementation always scales sample depths to bit depth 8
+ * and pre-multiplies alpha if present.
+ *
+ * @author Adam Martinu
+ * @since 1.0
+ */
 final class Adam7 implements InterlaceMethod {
 
+    /**
+     * Singleton instance.
+     */
     static final Adam7 INSTANCE = new Adam7();
 
+    /**
+     * Private constructor, use {@link #INSTANCE}.
+     */
     private Adam7() { }
 
     @Override
     public byte[] getPngSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
-            byte[] filterData, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
+            byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
         // reduced images containing the samples
-        ReducedImage[] images = getReducedImages(width, height, bitDepth, colorType, filterMethod, filterData);
+        ReducedImage[] images = getReducedImages(width, height, bitDepth, colorType, filterMethod, filt);
         // pixel setters for reduced image samples
         PixelSetter[] setters = new PixelSetter[images.length];
         for (int i = 0; i < images.length; i++) {
@@ -43,7 +59,7 @@ final class Adam7 implements InterlaceMethod {
             }
         }
 
-        // TODO for every 2nd scanline, the index can only be 6
+        // TODO optimisation: for every 2nd scanline, the index can only be 6
         // table of the reduced image/pixel setter index for a given pixel
         int[] table = {
                 0, 5, 3, 5, 1, 5, 3, 5,
@@ -99,10 +115,9 @@ final class Adam7 implements InterlaceMethod {
         IntUnaryOperator bytes = (w) -> (int) Math.ceil(w * colorType.getComponentCount() * bitDepth / 8.0d);
         // return value
         ReducedImage[] images = new ReducedImage[7];
-        // offset into filterData
+        // offset into filterData, incremented between passes
         int offset = 0;
 
-        // TODO recheck dimensions of Image are correct
         // pass 1
         {
             int w = (int) Math.ceil(width / 8.0d);
@@ -178,7 +193,6 @@ final class Adam7 implements InterlaceMethod {
             int lines = (int) Math.ceil((height - 1) / 2.0d);
             int nBytes = bytes.applyAsInt(w);
             images[6] = new ReducedImage(w, lines, filterMethod.reconstruct(bitDepth, colorType, filterData, offset, lines, nBytes));
-            // offset += lines * (nBytes + 1);
         }
         else {
             images[6] = null;

@@ -18,19 +18,38 @@ package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
+/**
+ * Implementation of an interlace method that can combine reduced images, based
+ * on interlace method 0 in the PNG Specification, section
+ * <a href="https://www.w3.org/TR/png/#8InterlaceMethods">8.1</a>.
+ *
+ * <b>NOTE:</b> this implementation always scales sample depths to bit depth 8
+ * and pre-multiplies alpha if present.
+ *
+ * @author Adam Martinu
+ * @since 1.0
+ */
 final class NullMethod implements InterlaceMethod {
 
+    /**
+     * Singleton instance.
+     */
     static final NullMethod INSTANCE = new NullMethod();
 
+    /**
+     * Private constructor, use {@link #INSTANCE}.
+     */
     private NullMethod() { }
 
     @Override
     public byte[] getPngSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
-            byte[] filterData, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
+            byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
 
-        byte[] samples = filterMethod.reconstruct(bitDepth, colorType,
-                filterData, height, (int) Math.ceil(width * colorType.getComponentCount() * bitDepth / 8.0));
-        // single reduced image containing the samples
+        // number of bytes in a scanline
+        int nBytes = (int) Math.ceil(width * colorType.getComponentCount() * bitDepth / 8.0);
+        // the filtered data contains a single reduced image; number of
+        // scanlines is equal to height
+        byte[] samples = filterMethod.reconstruct(bitDepth, colorType, filt, height, nBytes);
         ReducedImage img = new ReducedImage(width, height, samples);
 
         // pixel setter for reduced image samples
