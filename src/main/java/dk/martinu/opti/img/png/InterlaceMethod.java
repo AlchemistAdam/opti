@@ -18,6 +18,8 @@ package dk.martinu.opti.img.png;
 
 import dk.martinu.opti.img.spi.ImageDataException;
 
+import java.util.Arrays;
+
 /**
  * Interface to represent an interlace method. This interface only declares
  * methods for reversing (combining) the reduced images produced by pass
@@ -51,14 +53,83 @@ interface InterlaceMethod {
      * @param filterMethod the {@code FilterMethod} used to reconstruct the
      *                     filtered sample bytes
      * @param filt         the filtered sample bytes
-     * @param palette      the color palette, or {@code null}
-     * @param transparency the transparent colors, or {@code null}
-     * @param background   the background color, or {@code null}
+     * @param plte         the color palette, or {@code null}
+     * @param trns         the transparent colors, or {@code null}
+     * @param bkgd         the background color, or {@code null}
      * @return an array of sample values of a single image, ordered left to
      * right, top to bottom
      * @throws ImageDataException if an error occurred when combining the
      *                            reduced images
      */
     byte[] getCombinedSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
-            byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException;
+            byte[] filt, byte[] plte, byte[] trns, byte[] bkgd) throws ImageDataException;
+
+    // DOC
+    default byte[] getCompositingBackground(ColorType colorType, byte[] plte, byte[] bkgd) {
+        if (bkgd == null) {
+            // create new default (white) background color for color type
+            // INDEXED
+            if (colorType.usesPalette()) {
+                return new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
+            }
+            // TRUECOLOR and TRUECOLOR_ALPHA
+            if (colorType.usesTruecolor()) {
+                return new byte[] {
+                        (byte) 0xFF, (byte) 0xFF,
+                        (byte) 0xFF, (byte) 0xFF,
+                        (byte) 0xFF, (byte) 0xFF};
+            }
+            // GREYSCALE and GREYSCALE_ALPHA
+            else {
+                return new byte[] {(byte) 0xFF, (byte) 0xFF};
+            }
+        }
+        else if (colorType.usesPalette()) {
+            // get background color from palette
+            int index = (bkgd[0] & 0xFF) * 3;
+            return new byte[] {
+                    plte[index],
+                    plte[index + 1],
+                    plte[index + 2]};
+        }
+        else {
+            // background color samples are stored in array
+            return bkgd;
+        }
+    }
+
+    // DOC
+    default byte[] getPremultipliedPalette(ColorType colorType, byte[] plte, byte[] trns, byte[] bkgd) {
+        if (colorType.usesPalette() && plte != null && trns != null) {
+            // background color constants for multiplying
+            final float r = (float) (bkgd[0] & 0xFF);
+            final float g = (float) (bkgd[1] & 0xFF);
+            final float b = (float) (bkgd[2] & 0xFF);
+            // return value with premultiplied colors
+            byte[] copy = Arrays.copyOf(plte, plte.length);
+            // iterate over all entries in tRNS (may contain fewer entries than palette entries)
+            for (int i = 0, pi = 0; i < trns.length; i++, pi += 3) {
+                int alpha = trns[i] & 0xFF;
+                // fully transparent
+                if (alpha == 0) {
+                    copy[pi]     = bkgd[0];
+                    copy[pi + 1] = bkgd[1];
+                    copy[pi + 2] = bkgd[2];
+                }
+                // partially transparent
+                else if (alpha != 0xFF) {
+                    // output = alpha * foreground + (1-alpha) * background
+                    float alpha_fg = alpha / 255.0F;
+                    float alpha_bg = 1.0F - alpha_fg;
+                    copy[pi]     = (byte) ((int) (alpha_fg * (copy[pi] & 0xFF)) + (int) (alpha_bg * r));
+                    copy[pi + 1] = (byte) ((int) (alpha_fg * (copy[pi + 1] & 0xFF)) + (int) (alpha_bg * g));
+                    copy[pi + 2] = (byte) ((int) (alpha_fg * (copy[pi + 2] & 0xFF)) + (int) (alpha_bg * b));
+                }
+            }
+            return copy;
+        }
+        else {
+            return plte;
+        }
+    }
 }

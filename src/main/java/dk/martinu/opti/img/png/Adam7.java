@@ -45,14 +45,16 @@ final class Adam7 implements InterlaceMethod {
 
     @Override
     public byte[] getCombinedSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
-            byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
+            byte[] filt, byte[] plte, byte[] trns, byte[] bkgd) throws ImageDataException {
         // reduced images containing the samples
         ReducedImage[] images = getReducedImages(width, height, bitDepth, colorType, filterMethod, filt);
         // pixel setters for reduced image samples
+        bkgd = getCompositingBackground(colorType, plte, bkgd);
+        plte = getPremultipliedPalette(colorType, plte, trns, bkgd);
         PixelSetter[] setters = new PixelSetter[images.length];
         for (int i = 0; i < images.length; i++) {
             if (images[i] != null && images[i].samples.length > 0) {
-                setters[i] = colorType.getPixelSetter(bitDepth, images[i], palette, transparency, background);
+                setters[i] = colorType.getPixelSetter(bitDepth, images[i], plte, trns, bkgd);
             }
             else {
                 setters[i] = null;

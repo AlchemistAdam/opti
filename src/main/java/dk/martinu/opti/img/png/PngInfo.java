@@ -144,12 +144,9 @@ public class PngInfo {
         // FIXME IDAT lengths are not validated and can contain any amount of samples
         //  both too much and too little
 
-        // prepare background and palette for images with alpha
-        byte[] bkgd = getCompositingBackground();
-        byte[] plte = getPremultipliedPalette(bkgd);
         // image samples used by return value
         byte[] samples = interlaceMethod.getCombinedSamples(width, height, bitDepth, colorType,
-                filterMethod, getFilteredData(), plte, transparency, bkgd);
+                filterMethod, getFilteredData(), palette, transparency, background);
 
         // return value
         final OptiImage img;
@@ -384,39 +381,6 @@ public class PngInfo {
         };
     }
 
-    private byte[] getCompositingBackground() {
-        // create new default (white) background color for color type
-        if (background == null) {
-            // INDEXED
-            if (colorType.usesPalette()) {
-                return new byte[] {(byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
-            }
-            // TRUECOLOR and TRUECOLOR_ALPHA
-            if (colorType.usesTruecolor()) {
-                return new byte[] {
-                        (byte) 0xFF, (byte) 0xFF,
-                        (byte) 0xFF, (byte) 0xFF,
-                        (byte) 0xFF, (byte) 0xFF};
-            }
-            // GREYSCALE and GREYSCALE_ALPHA
-            else {
-                return new byte[] {(byte) 0xFF, (byte) 0xFF};
-            }
-        }
-        // get background color from palette
-        else if (colorType.usesPalette()) {
-            int index = (background[0] & 0xFF) * 3;
-            return new byte[] {
-                    palette[index],
-                    palette[index + 1],
-                    palette[index + 2]};
-        }
-        // background color samples are stored in array
-        else {
-            return background;
-        }
-    }
-
     private FilterMethod getFilterMethod(byte value) throws ImageDataException {
         int i = value & 0xFF;
         if (i == FILTER_METHOD_0) {
@@ -460,40 +424,6 @@ public class PngInfo {
         }
         else {
             throw new ImageDataException("invalid interlace method value {%d}", i);
-        }
-    }
-
-    private byte[] getPremultipliedPalette(byte[] bkgd) {
-        if (colorType.usesPalette() && palette != null && transparency != null) {
-            // background color constants for multiplying
-            final float r = (float) (bkgd[0] & 0xFF);
-            final float g = (float) (bkgd[1] & 0xFF);
-            final float b = (float) (bkgd[2] & 0xFF);
-            // return value with premultiplied colors
-            byte[] plte = Arrays.copyOf(palette, palette.length);
-            // iterate over all entries in tRNS (may contain fewer entries than palette entries)
-            for (int i = 0, pi = 0; i < transparency.length; i++, pi += 3) {
-                int alpha = transparency[i] & 0xFF;
-                // fully transparent
-                if (alpha == 0) {
-                    plte[pi]     = bkgd[0];
-                    plte[pi + 1] = bkgd[1];
-                    plte[pi + 2] = bkgd[2];
-                }
-                // partially transparent
-                else if (alpha != 0xFF) {
-                    // output = alpha * foreground + (1-alpha) * background
-                    float alpha_fg = alpha / 255.0F;
-                    float alpha_bg = 1.0F - alpha_fg;
-                    plte[pi]     = (byte) ((int) (alpha_fg * (plte[pi] & 0xFF)) + (int) (alpha_bg * r));
-                    plte[pi + 1] = (byte) ((int) (alpha_fg * (plte[pi + 1] & 0xFF)) + (int) (alpha_bg * g));
-                    plte[pi + 2] = (byte) ((int) (alpha_fg * (plte[pi + 2] & 0xFF)) + (int) (alpha_bg * b));
-                }
-            }
-            return plte;
-        }
-        else {
-            return palette;
         }
     }
 }

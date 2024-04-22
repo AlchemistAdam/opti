@@ -43,7 +43,7 @@ final class NullMethod implements InterlaceMethod {
 
     @Override
     public byte[] getCombinedSamples(int width, int height, int bitDepth, ColorType colorType, FilterMethod filterMethod,
-            byte[] filt, byte[] palette, byte[] transparency, byte[] background) throws ImageDataException {
+            byte[] filt, byte[] plte, byte[] trns, byte[] bkgd) throws ImageDataException {
 
         // number of bytes in a scanline
         int nBytes = (int) Math.ceil(width * colorType.getComponentCount() * bitDepth / 8.0);
@@ -53,7 +53,9 @@ final class NullMethod implements InterlaceMethod {
         ReducedImage img = new ReducedImage(width, height, samples);
 
         // pixel setter for reduced image samples
-        PixelSetter setter = colorType.getPixelSetter(bitDepth, img, palette, transparency, background);
+        bkgd = getCompositingBackground(colorType, plte, bkgd);
+        plte = getPremultipliedPalette(colorType, plte, trns, bkgd);
+        PixelSetter setter = colorType.getPixelSetter(bitDepth, img, plte, trns, bkgd);
 
         // number of components for each pixel in destination array
         int components = colorType.usesTruecolor() ? 3 : 1;
