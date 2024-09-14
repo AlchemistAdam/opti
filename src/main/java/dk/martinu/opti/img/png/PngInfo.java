@@ -25,7 +25,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import static dk.martinu.opti.Util.getInt;
-import static dk.martinu.opti.img.OptiImage.*;
+import static dk.martinu.opti.img.ByteImage.*;
 import static dk.martinu.opti.img.png.ChunkType.*;
 
 public class PngInfo {
@@ -85,7 +85,7 @@ public class PngInfo {
     /**
      * Buffer for storing IDAT byte arrays as they are read.
      */
-    protected ByteArrayBuffer idatBuffer = new ByteArrayBuffer();
+    protected final ByteArrayBuffer idatBuffer = new ByteArrayBuffer();
     /**
      * {@code true} if {@link #idatBuffer} is closed, otherwise {@code false}.
      * Set to {@code true} when another chunk has been read after one or more
@@ -132,7 +132,7 @@ public class PngInfo {
         metadata.put(BIT_DEPTH, bitDepth);
     }
 
-    public OptiImage createImage() throws ImageFormatException, ImageDataException {
+    public ByteImage createImage() throws ImageFormatException, ImageDataException {
         // https://www.w3.org/TR/png/#5ChunkOrdering
         if (colorType.usesPalette() && palette == null) {
             throw new ImageFormatException("missing PLTE chunk");
@@ -149,7 +149,7 @@ public class PngInfo {
                 filterMethod, getFilteredData(), palette, transparency, background);
 
         // return value
-        final OptiImage img;
+        final ByteImage img;
         // TODO copy pngSamples into image instance
         if (colorType.usesTruecolor()) {
             img = new RgbImage(width, height, samples, metadata);

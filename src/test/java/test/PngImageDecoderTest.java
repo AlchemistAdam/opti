@@ -17,7 +17,7 @@
 package test;
 
 import dk.martinu.opti.ByteView;
-import dk.martinu.opti.img.OptiImage;
+import dk.martinu.opti.img.ByteImage;
 import dk.martinu.opti.img.png.PngImageDecoder;
 import dk.martinu.opti.img.png.PngInfo;
 import org.junit.jupiter.api.*;
@@ -74,8 +74,8 @@ public class PngImageDecoderTest {
      * @param filePath the path of the image file to read from
      * @return the decoded image object
      */
-    private static OptiImage decodeWithOpti(Path filePath) {
-        OptiImage[] decode = new OptiImage[1];
+    private static ByteImage decodeWithOpti(Path filePath) {
+        ByteImage[] decode = new ByteImage[1];
         assertDoesNotThrow(() -> {
             decode[0] = PngImageDecoder.provider().decode(filePath);
         });
@@ -119,7 +119,7 @@ public class PngImageDecoderTest {
             // composite sample values with alpha
             else {
                 // background compositing sample
-                ByteView bv = (ByteView) metadata.get(OptiImage.COMPOSITING_BACKGROUND);
+                ByteView bv = (ByteView) metadata.get(ByteImage.COMPOSITING_BACKGROUND);
                 final int bkgd = bv != null ? bv.get(channel) & 0xFF : 0xFF;
 
                 // number of bits to shift alpha values
@@ -158,8 +158,8 @@ public class PngImageDecoderTest {
             else {
 
                 // background compositing sample
-                Integer bitDepth = (Integer) metadata.get(OptiImage.BIT_DEPTH);
-                ByteView bv = (ByteView) metadata.get(OptiImage.COMPOSITING_BACKGROUND);
+                Integer bitDepth = (Integer) metadata.get(ByteImage.BIT_DEPTH);
+                ByteView bv = (ByteView) metadata.get(ByteImage.COMPOSITING_BACKGROUND);
                 final int bkgd;
                 if (bitDepth != null && bv != null) {
                     int index = bitDepth > PngInfo.BIT_DEPTH_8 ? channel * 2 : channel * 2 + 1;
@@ -314,7 +314,7 @@ public class PngImageDecoderTest {
         // white background, causing the test to fail
         assumeFalse(filePath.endsWith("tbbn0g04.png"));
 
-        OptiImage img = decodeWithOpti(filePath);
+        ByteImage img = decodeWithOpti(filePath);
         BufferedImage bImg = decodeWithIIO(filePath.toFile());
 
         int width = img.width;

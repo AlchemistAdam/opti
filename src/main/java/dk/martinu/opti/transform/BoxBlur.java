@@ -1,6 +1,6 @@
 package dk.martinu.opti.transform;
 
-import dk.martinu.opti.img.OptiImage;
+import dk.martinu.opti.img.ByteImage;
 
 public class BoxBlur implements ImageTransform {
 
@@ -18,7 +18,7 @@ public class BoxBlur implements ImageTransform {
     }
 
     @Override
-    public OptiImage applyTo(OptiImage source) {
+    public ByteImage applyTo(ByteImage source) {
         // return source if image is too small to blur
         if (source.width < size || source.height < size) {
             return source;
@@ -28,7 +28,7 @@ public class BoxBlur implements ImageTransform {
         final int width = source.width - radius * 2;
         final int height = source.height - radius * 2;
         // allocate return image
-        final OptiImage img = source.allocate(width, height);
+        final ByteImage img = source.allocate(width, height);
         // blur samples
         for (int channel = 0; channel < source.channels; channel++) {
             for (int y = 0; y < height; y++) {

@@ -1,9 +1,9 @@
 package dk.martinu.opti.transform;
 
-import dk.martinu.opti.img.OptiImage;
+import dk.martinu.opti.img.ByteImage;
 
 @FunctionalInterface
 public interface ImageTransform {
 
-    OptiImage applyTo(OptiImage source);
+    ByteImage applyTo(ByteImage source);
 }

@@ -1,7 +1,7 @@
 package dk.martinu.opti.transform;
 
 import dk.martinu.opti.img.GrayscaleImage;
-import dk.martinu.opti.img.OptiImage;
+import dk.martinu.opti.img.ByteImage;
 import dk.martinu.opti.img.RgbImage;
 
 public class BoxBlur2 implements ImageTransform{
@@ -20,7 +20,7 @@ public class BoxBlur2 implements ImageTransform{
     }
 
     @Override
-    public OptiImage applyTo(OptiImage source) {
+    public ByteImage applyTo(ByteImage source) {
         // TODO if sample size is 8 then switch on channels instead of class types
         // return transform applied to image depending on type
         if (source instanceof GrayscaleImage) {
@@ -34,7 +34,7 @@ public class BoxBlur2 implements ImageTransform{
         }
     }
 
-    protected OptiImage applyToGrayscale(OptiImage source) {
+    protected ByteImage applyToGrayscale(ByteImage source) {
         // https://en.wikipedia.org/wiki/Box_blur
 
         // transformed image dimensions
@@ -59,17 +59,17 @@ public class BoxBlur2 implements ImageTransform{
 
         // allocate return image with border pixels removed
         //noinspection UnnecessaryLocalVariable
-        final OptiImage dest = source.allocate(width, height);
+        final ByteImage dest = source.allocate(width, height);
         return dest;
     }
 
     // TODO
-    protected OptiImage applyToRgb(OptiImage source) {
+    protected ByteImage applyToRgb(ByteImage source) {
         return null;
     }
 
     // TODO
-    protected OptiImage applyToOther(OptiImage source) {
+    protected ByteImage applyToOther(ByteImage source) {
         return null;
     }
 }

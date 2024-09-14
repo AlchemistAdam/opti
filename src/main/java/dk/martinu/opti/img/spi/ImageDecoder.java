@@ -1,6 +1,6 @@
 package dk.martinu.opti.img.spi;
 
-import dk.martinu.opti.img.OptiImage;
+import dk.martinu.opti.img.ByteImage;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -9,5 +9,5 @@ public interface ImageDecoder {
 
     boolean canDecode(Path path);
 
-    OptiImage decode(Path path) throws IOException;
+    ByteImage decode(Path path) throws IOException;
 }

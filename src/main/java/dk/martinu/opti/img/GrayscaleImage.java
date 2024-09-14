@@ -29,36 +29,35 @@ public class GrayscaleImage extends ByteImage {
     }
 
     @Override
-    public OptiImage allocate() {
+    public GrayscaleImage allocate() {
         return new GrayscaleImage(width, height);
     }
 
     @Override
-    public OptiImage allocate(int width, int height) {
+    public GrayscaleImage allocate(int width, int height) {
         return new GrayscaleImage(width, height);
     }
 
     @Override
     public byte[] getPixel(int x, int y, byte[] pixel) {
-        pixel[0] = data[x + y * width];
+        pixel[0] = samples[x + y * width];
         return pixel;
     }
 
     @Override
     public byte getSample(int x, int y, int channel) {
-        return data[x + y * width];
+        return samples[x + y * width];
     }
 
     @Override
-    public byte[] getSamples(int x, int y, int channel, byte[] dest) {
+    public void getSamples(int x, int y, int channel, byte[] dest) {
         // number of samples to copy into dest
         final int len = Math.min(dest.length, (width * height) - (x + y * width));
-        System.arraycopy(data, x + y * width, dest, 0, len);
-        return dest;
+        System.arraycopy(samples, x + y * width, dest, 0, len);
     }
 
     @Override
     public void setSample(int x, int y, int channel, byte s) {
-        data[x + y * width] = s;
+        samples[x + y * width] = s;
     }
 }
